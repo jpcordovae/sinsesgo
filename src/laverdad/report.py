@@ -664,7 +664,7 @@ def _aviso_body() -> str:
       <p><strong>Sin Sesgo</strong> es un agregador de cobertura noticiosa sobre Chile. No es un medio que publique reportajes propios ni un semáforo de verdad.</p>
       <p>De cada nota guardamos únicamente <strong>título, bajada (máximo 400 caracteres) y URL</strong>. No almacenamos el cuerpo del artículo, no bypaseamos paywalls y no hacemos clipping de la obra completa. El enlace lleva al sitio original. Eso es lo que permite la Ley 17.336 para un agregador: citar, no reproducir.</p>
       <p>La tendencia izquierda / centro / derecha es un <strong>criterio editorial chileno</strong> del catálogo, no un rating de AllSides, Ad Fontes ni Media Bias/Fact Check. Independiente describe propiedad, no neutralidad.</p>
-      <p>Los sitemaps XML que publican los medios para Google (robots.txt) se usan solo para descubrir URL y titulares. No se scrapea el HTML de la nota.</p>
+      <p>Los sitemaps XML que publican los medios para Google (robots.txt) se usan para descubrir URL y titulares. Si hace falta, se lee solo la bajada pública (meta descripción), no el cuerpo de la nota. El cluster compara ese vocabulario.</p>
       <h2>Contacto</h2>
       <p>Para correcciones de catálogo, reclamos de titulares o baja de un enlace: <a href="mailto:{mail}">{mail}</a>.</p>
     """

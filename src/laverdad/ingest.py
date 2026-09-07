@@ -229,8 +229,53 @@ def ingest_outlets(outlets: list[dict[str, Any]], *, timeout: float = 12.0) -> d
     unique: dict[str, dict[str, Any]] = {}
     for article in articles:
         unique[article["url"]] = article
+    filled = fill_missing_leads(list(unique.values()), timeout=min(8.0, timeout))
     return {
         "fetched_at": datetime.now(timezone.utc).isoformat(),
         "feed_status": feed_status,
-        "articles": list(unique.values()),
+        "articles": filled,
     }
+
+
+_META_LEAD = re.compile(
+    r"""<meta[^>]+(?:property|name)\s*=\s*["'](?:og:description|twitter:description|description)["'][^>]+content\s*=\s*["']([^"']+)["']""",
+    re.I,
+)
+_META_LEAD_REV = re.compile(
+    r"""<meta[^>]+content\s*=\s*["']([^"']+)["'][^>]+(?:property|name)\s*=\s*["'](?:og:description|twitter:description|description)["']""",
+    re.I,
+)
+_FIRST_P = re.compile(r"<p[^>]*>(.*?)</p>", re.I | re.S)
+
+
+def extract_lead_html(html_text: str) -> str:
+    """Solo bajada pública (meta/primer párrafo). Nunca el cuerpo completo."""
+    for pattern in (_META_LEAD, _META_LEAD_REV):
+        match = pattern.search(html_text or "")
+        if match:
+            lead = strip_html(match.group(1))
+            if len(lead) >= 40:
+                return lead[:400]
+    for block in _FIRST_P.findall(html_text or "")[:4]:
+        lead = strip_html(block)
+        if len(lead) >= 70:
+            return lead[:400]
+    return ""
+
+
+def fill_missing_leads(articles: list[dict[str, Any]], *, timeout: float = 8.0, limit: int = 140) -> list[dict[str, Any]]:
+    need = [row for row in articles if len((row.get("lead") or "").strip()) < 50][:limit]
+    if not need:
+        return articles
+
+    def _one(row: dict[str, Any]) -> None:
+        html_text, error = fetch_feed(row.get("url") or "", timeout=timeout)
+        if error or not html_text:
+            return
+        lead = extract_lead_html(html_text)
+        if lead:
+            row["lead"] = lead
+
+    with ThreadPoolExecutor(max_workers=8) as pool:
+        list(pool.map(_one, need))
+    return articles

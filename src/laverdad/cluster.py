@@ -389,13 +389,17 @@ def enrich_stories(stories: list[dict[str, Any]], catalog: dict[str, Any]) -> li
     return enriched
 
 
+def content_blob(article: dict[str, Any]) -> str:
+    return f"{clean_title(article.get('title') or '')} {(article.get('lead') or '').strip()}"
+
+
 def _pair_similar(
     title_a: str,
     title_b: str,
     tok_a: set[str],
     tok_b: set[str],
-    sig_a: set[str],
-    sig_b: set[str],
+    lead_a: str,
+    lead_b: str,
     freq: dict[str, int],
     same_outlet: bool,
     n_docs: int,
@@ -404,14 +408,24 @@ def _pair_similar(
         return False
     if same_outlet:
         return fuzz.token_set_ratio(title_a, title_b) >= 92
+    union = tok_a | tok_b
+    overlap = tok_a & tok_b
+    jaccard = len(overlap) / len(union) if union else 0
     cap = max(8, int(n_docs * 0.025))
     keys = {
         w
-        for w in (tok_a & tok_b)
+        for w in overlap
         if w not in FILLER and len(w) >= 4 and freq.get(w, 99) <= cap
     }
-    overlap = tok_a & tok_b
     ratio = fuzz.token_set_ratio(title_a, title_b)
+    has_leads = len(lead_a) >= 60 and len(lead_b) >= 60
+    if has_leads:
+        # Vocabulario de la nota (título + bajada). No el titular solo.
+        if jaccard >= 0.18 and len(keys) >= 2:
+            return True
+        if jaccard >= 0.26:
+            return True
+        return False
     if len(keys) >= 3 and ratio >= 52:
         return True
     if len(keys) >= 2 and ratio >= 70:
@@ -425,28 +439,39 @@ def _pair_similar(
 
 
 def cluster_articles(articles: list[dict[str, Any]]) -> list[dict[str, Any]]:
-    """Greedy contra el titular semilla. Sin arrastre: un match flojo ya no contamina el cluster."""
+    """Agrupa por vocabulario de título + bajada. Sin cuerpo persistido."""
     if not articles:
         return []
-    cleaned = [clean_title(a.get("title") or "") for a in articles]
-    freq = _doc_freq([{"title": t} for t in cleaned])
+    blobs = [content_blob(article) for article in articles]
+    freq = _doc_freq([{"title": blob} for blob in blobs])
     n_docs = len(articles)
     stories: list[dict[str, Any]] = []
-    seeds: list[tuple[str, set[str], set[str], str]] = []
-    for article, title in zip(articles, cleaned, strict=True):
-        tok = tokens(title)
-        sig = signatures(title, freq, n_docs)
+    seeds: list[tuple[str, set[str], str, str]] = []
+    for article, blob in zip(articles, blobs, strict=True):
+        title = clean_title(article.get("title") or "")
+        tok = tokens(blob)
         oid = article.get("outlet_id") or ""
+        lead = (article.get("lead") or "").strip()
         placed = False
         for story, seed in zip(stories, seeds, strict=True):
-            seed_title, seed_tok, seed_sig, seed_oid = seed
-            if _pair_similar(title, seed_title, tok, seed_tok, sig, seed_sig, freq, oid == seed_oid, n_docs):
+            seed_title, seed_tok, seed_lead, seed_oid = seed
+            if _pair_similar(
+                title,
+                seed_title,
+                tok,
+                seed_tok,
+                lead,
+                seed_lead,
+                freq,
+                oid == seed_oid,
+                n_docs,
+            ):
                 story["articles"].append(article)
                 placed = True
                 break
         if not placed:
             stories.append({"articles": [article]})
-            seeds.append((title, tok, sig, oid))
+            seeds.append((title, tok, lead, oid))
 
     result = [annotate_story(index, story["articles"]) for index, story in enumerate(stories, start=1)]
     result.sort(key=lambda row: (-row["source_count"], -row["article_count"]))
