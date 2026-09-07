@@ -1,0 +1,16 @@
+.venv/
+__pycache__/
+*.pyc
+.pytest_cache/
+data/out/
+*.egg-info/
+.graphify_python
+.env
+.env.*
+.netlify/
+.netlify-deploy.zip
+public/index.html
+public/clusters.json
+.cursor/
+.idea/
+.DS_Store

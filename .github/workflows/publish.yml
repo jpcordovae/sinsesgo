@@ -1,0 +1,52 @@
+name: Ingest and publish
+
+on:
+  schedule:
+    - cron: "*/30 * * * *"
+  workflow_dispatch:
+  push:
+    branches: [main, master]
+    paths-ignore:
+      - "public/index.html"
+      - "public/clusters.json"
+      - "README.md"
+      - ".gitignore"
+
+concurrency:
+  group: sinsesgo-publish
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  ingest:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install
+        run: pip install -e .
+
+      - name: Ingest RSS and render
+        env:
+          GA_MEASUREMENT_ID: ${{ secrets.GA_MEASUREMENT_ID }}
+        run: python -m laverdad.cli ingest
+
+      - name: Deploy snapshot to Netlify
+        env:
+          NETLIFY_AUTH_TOKEN: ${{ secrets.NETLIFY_AUTH_TOKEN }}
+          NETLIFY_SITE_ID: 1aecd8f3-30b8-41e5-a02b-1d7d4a1bfa64
+        run: |
+          python -c "import zipfile; from pathlib import Path; root=Path('public'); z=zipfile.ZipFile('public.zip','w',zipfile.ZIP_DEFLATED);
+          [z.write(p, p.relative_to(root).as_posix()) for p in root.rglob('*') if p.is_file()]; z.close()"
+          curl -fsS -X POST \
+            -H "Authorization: Bearer ${NETLIFY_AUTH_TOKEN}" \
+            -H "Content-Type: application/zip" \
+            --data-binary @public.zip \
+            "https://api.netlify.com/api/v1/sites/${NETLIFY_SITE_ID}/deploys"
