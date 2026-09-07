@@ -80,26 +80,77 @@ def fold(text: str) -> str:
 
 FILLER = STOPWORDS | {
     "anuncia",
+    "apunta",
     "asegura",
+    "campana",
+    "capacidad",
+    "cierran",
+    "claves",
+    "calidad",
+    "cuatro",
     "confirma",
+    "crimen",
+    "declaracion",
     "detalla",
     "dice",
+    "domingo",
+    "economia",
+    "fiestas",
+    "fortalecer",
+    "fotos",
+    "fueron",
     "gobierno",
     "hora",
     "hoy",
+    "impacto",
+    "investigacion",
+    "jueves",
+    "lluvia",
+    "lunes",
+    "martes",
+    "miercoles",
+    "millones",
     "ministra",
     "ministro",
     "nacional",
     "nueva",
     "nuevo",
     "pais",
+    "patrias",
     "presidente",
+    "prevencion",
+    "prevenir",
+    "puntos",
+    "recomendaciones",
+    "reportajes",
     "revela",
+    "sabado",
+    "santiago",
     "segun",
+    "septiembre",
+    "tendencia",
     "ultima",
     "video",
-    "fotos",
+    "viernes",
 }
+
+_NOISE = re.compile(
+    r"(ver video|24 horas reportajes|el especialista responde|codigo ie|"
+    r"lunes|martes|miercoles|miércoles|jueves|viernes|sabado|sábado|domingo)"
+    r".{0,48}\d{0,4}",
+    re.I,
+)
+_PREFIX = re.compile(
+    r"^(rfi|tenis|futbol chileno|fútbol chileno|gobierno de kast|vina del mar|"
+    r"viña del mar|el tiempo|incendio|lluvia en santiago|criteria|nacional)\s+",
+    re.I,
+)
+
+
+def clean_title(title: str) -> str:
+    text = _NOISE.sub(" ", title or "")
+    text = _PREFIX.sub("", text).strip()
+    return re.sub(r"\s+", " ", text)
 
 
 def tokens(text: str) -> set[str]:
@@ -116,7 +167,7 @@ def _doc_freq(articles: list[dict[str, Any]]) -> dict[str, int]:
 
 
 def signatures(title: str, freq: dict[str, int], n_docs: int) -> set[str]:
-    rare_cap = max(5, int(n_docs * 0.045))
+    rare_cap = max(3, int(n_docs * 0.02))
     sig: set[str] = set()
     for word in tokens(title):
         if word in FILLER or len(word) < 4:
@@ -347,51 +398,55 @@ def _pair_similar(
     sig_b: set[str],
     freq: dict[str, int],
     same_outlet: bool,
+    n_docs: int,
 ) -> bool:
     if not tok_a or not tok_b:
         return False
     if same_outlet:
         return fuzz.token_set_ratio(title_a, title_b) >= 92
-    shared = {w for w in (sig_a & sig_b) if freq.get(w, 99) <= 4 and len(w) >= 5}
-    if len(shared) >= 2:
-        return True
-    if len(shared) == 1:
-        word = next(iter(shared))
-        if freq.get(word, 99) <= 2 and len(word) >= 6:
-            return True
+    cap = max(8, int(n_docs * 0.025))
+    keys = {
+        w
+        for w in (tok_a & tok_b)
+        if w not in FILLER and len(w) >= 4 and freq.get(w, 99) <= cap
+    }
     overlap = tok_a & tok_b
-    if len(overlap) < 3:
-        return False
     ratio = fuzz.token_set_ratio(title_a, title_b)
-    return ratio >= 74
+    if len(keys) >= 3 and ratio >= 52:
+        return True
+    if len(keys) >= 2 and ratio >= 70:
+        return True
+    rare = {w for w in keys if freq.get(w, 99) <= 4}
+    if len(rare) == 1 and ratio >= 70 and len(overlap) >= 3:
+        return True
+    if len(overlap) >= 5 and ratio >= 86:
+        return True
+    return False
 
 
 def cluster_articles(articles: list[dict[str, Any]]) -> list[dict[str, Any]]:
-    """Greedy por titular. Sin union-find: la transitividad armaba un cluster de 600 notas."""
+    """Greedy contra el titular semilla. Sin arrastre: un match flojo ya no contamina el cluster."""
     if not articles:
         return []
-    freq = _doc_freq(articles)
+    cleaned = [clean_title(a.get("title") or "") for a in articles]
+    freq = _doc_freq([{"title": t} for t in cleaned])
     n_docs = len(articles)
     stories: list[dict[str, Any]] = []
-    story_meta: list[list[tuple[str, set[str], set[str], str]]] = []
-    for article in articles:
-        title = article.get("title") or ""
+    seeds: list[tuple[str, set[str], set[str], str]] = []
+    for article, title in zip(articles, cleaned, strict=True):
         tok = tokens(title)
         sig = signatures(title, freq, n_docs)
         oid = article.get("outlet_id") or ""
         placed = False
-        for story, meta in zip(stories, story_meta, strict=True):
-            for other_title, other_tok, other_sig, other_oid in meta[:6]:
-                if _pair_similar(title, other_title, tok, other_tok, sig, other_sig, freq, oid == other_oid):
-                    story["articles"].append(article)
-                    meta.append((title, tok, sig, oid))
-                    placed = True
-                    break
-            if placed:
+        for story, seed in zip(stories, seeds, strict=True):
+            seed_title, seed_tok, seed_sig, seed_oid = seed
+            if _pair_similar(title, seed_title, tok, seed_tok, sig, seed_sig, freq, oid == seed_oid, n_docs):
+                story["articles"].append(article)
+                placed = True
                 break
         if not placed:
             stories.append({"articles": [article]})
-            story_meta.append([(title, tok, sig, oid)])
+            seeds.append((title, tok, sig, oid))
 
     result = [annotate_story(index, story["articles"]) for index, story in enumerate(stories, start=1)]
     result.sort(key=lambda row: (-row["source_count"], -row["article_count"]))
