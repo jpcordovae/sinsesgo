@@ -48,15 +48,17 @@ def select_outlets(
     catalog: dict[str, Any],
     *,
     mvp_only: bool = True,
-    ingest: str = "rss",
+    ingest: str | None = None,
 ) -> list[dict[str, Any]]:
     selected = []
+    allowed = {ingest} if ingest else {"rss", "sitemap"}
     for outlet in catalog["outlets"]:
         if mvp_only and not outlet.get("mvp"):
             continue
-        if ingest and outlet.get("ingest") != ingest:
+        mode = outlet.get("ingest") or "rss"
+        if mode not in allowed:
             continue
-        if not outlet.get("feeds"):
+        if not outlet.get("feeds") and not outlet.get("sitemaps") and not outlet.get("listings"):
             continue
         selected.append(outlet)
     return selected

@@ -78,22 +78,75 @@ def fold(text: str) -> str:
     return "".join(ch for ch in nfkd if not unicodedata.combining(ch))
 
 
+FILLER = STOPWORDS | {
+    "anuncia",
+    "asegura",
+    "confirma",
+    "detalla",
+    "dice",
+    "gobierno",
+    "hora",
+    "hoy",
+    "ministra",
+    "ministro",
+    "nacional",
+    "nueva",
+    "nuevo",
+    "pais",
+    "presidente",
+    "revela",
+    "segun",
+    "ultima",
+    "video",
+    "fotos",
+}
+
+
 def tokens(text: str) -> set[str]:
     words = re.findall(r"[a-z0-9]{3,}", fold(text))
     return {word for word in words if word not in STOPWORDS}
 
 
-def similar(a: dict[str, Any], b: dict[str, Any]) -> bool:
+def _doc_freq(articles: list[dict[str, Any]]) -> dict[str, int]:
+    freq: dict[str, int] = {}
+    for article in articles:
+        for word in tokens(article.get("title") or ""):
+            freq[word] = freq.get(word, 0) + 1
+    return freq
+
+
+def signatures(title: str, freq: dict[str, int], n_docs: int) -> set[str]:
+    rare_cap = max(5, int(n_docs * 0.045))
+    sig: set[str] = set()
+    for word in tokens(title):
+        if word in FILLER or len(word) < 4:
+            continue
+        if freq.get(word, 1) <= rare_cap:
+            sig.add(word)
+    return sig
+
+
+def similar(a: dict[str, Any], b: dict[str, Any], *, freq: dict[str, int] | None = None, n_docs: int = 0) -> bool:
     title_a, title_b = a["title"], b["title"]
     token_a, token_b = tokens(title_a), tokens(title_b)
     if not token_a or not token_b:
         return False
     overlap = token_a & token_b
+    if freq and n_docs:
+        sig_a = signatures(title_a, freq, n_docs)
+        sig_b = signatures(title_b, freq, n_docs)
+        shared = sig_a & sig_b
+        if len(shared) >= 2:
+            return True
+        if len(shared) == 1:
+            word = next(iter(shared))
+            if freq.get(word, 99) <= 8 and len(word) >= 5:
+                return True
     if len(overlap) < 2:
         return False
     ratio = fuzz.token_set_ratio(title_a, title_b)
     jaccard = len(overlap) / len(token_a | token_b)
-    return ratio >= 68 or (ratio >= 58 and jaccard >= 0.32)
+    return ratio >= 62 or (ratio >= 52 and jaccard >= 0.28)
 
 
 def unique_members(members: list[dict[str, Any]]) -> list[dict[str, Any]]:
@@ -285,19 +338,62 @@ def enrich_stories(stories: list[dict[str, Any]], catalog: dict[str, Any]) -> li
     return enriched
 
 
+def _pair_similar(
+    title_a: str,
+    title_b: str,
+    tok_a: set[str],
+    tok_b: set[str],
+    sig_a: set[str],
+    sig_b: set[str],
+    freq: dict[str, int],
+    same_outlet: bool,
+) -> bool:
+    if not tok_a or not tok_b:
+        return False
+    if same_outlet:
+        return fuzz.token_set_ratio(title_a, title_b) >= 92
+    shared = {w for w in (sig_a & sig_b) if freq.get(w, 99) <= 4 and len(w) >= 5}
+    if len(shared) >= 2:
+        return True
+    if len(shared) == 1:
+        word = next(iter(shared))
+        if freq.get(word, 99) <= 2 and len(word) >= 6:
+            return True
+    overlap = tok_a & tok_b
+    if len(overlap) < 3:
+        return False
+    ratio = fuzz.token_set_ratio(title_a, title_b)
+    return ratio >= 74
+
+
 def cluster_articles(articles: list[dict[str, Any]]) -> list[dict[str, Any]]:
-    """Agrupa por similitud de titular. Suficiente para validar el Bias Bar; no es embeddings."""
+    """Greedy por titular. Sin union-find: la transitividad armaba un cluster de 600 notas."""
+    if not articles:
+        return []
+    freq = _doc_freq(articles)
+    n_docs = len(articles)
     stories: list[dict[str, Any]] = []
+    story_meta: list[list[tuple[str, set[str], set[str], str]]] = []
     for article in articles:
+        title = article.get("title") or ""
+        tok = tokens(title)
+        sig = signatures(title, freq, n_docs)
+        oid = article.get("outlet_id") or ""
         placed = False
-        for story in stories:
-            if any(similar(article, member) for member in story["articles"]):
-                story["articles"].append(article)
-                placed = True
+        for story, meta in zip(stories, story_meta, strict=True):
+            for other_title, other_tok, other_sig, other_oid in meta[:6]:
+                if _pair_similar(title, other_title, tok, other_tok, sig, other_sig, freq, oid == other_oid):
+                    story["articles"].append(article)
+                    meta.append((title, tok, sig, oid))
+                    placed = True
+                    break
+            if placed:
                 break
         if not placed:
             stories.append({"articles": [article]})
+            story_meta.append([(title, tok, sig, oid)])
 
     result = [annotate_story(index, story["articles"]) for index, story in enumerate(stories, start=1)]
     result.sort(key=lambda row: (-row["source_count"], -row["article_count"]))
     return result
+

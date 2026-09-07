@@ -11,6 +11,8 @@ data/out/
 .netlify-deploy.zip
 public/index.html
 public/clusters.json
+public/aviso.html
+public/robots.txt
 .cursor/
 .idea/
 .DS_Store

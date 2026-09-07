@@ -2,7 +2,7 @@
   "version": 1,
   "country": "CL",
   "updated": "2026-09-07",
-  "notes": "Catálogo curado para el MVP Chile. gov_relation queda en sin_dato salvo evidencia editorial estable. lean es un borrador editorial chileno (no AllSides/Ad Fontes/MBFC): se colapsa a I/C/D en el Bias Bar. No persistir cuerpos de artículos. Feeds tomados de awesome-chilean-rss y sitios oficiales; el worker marca cuáles responden.",
+  "notes": "Catálogo curado para el piloto Chile. lean rev2: CIPER y Radio UChile centro-izquierda; Bío-Bío centro. Sitemaps XML de robots.txt para Emol, El Mostrador y TV. No persistir cuerpos.",
   "outlets": [
     {
       "id": "biobio",
@@ -18,8 +18,9 @@
       "feeds": [
         "https://feeds.feedburner.com/radiobiobio/NNeJ"
       ],
-      "lean": "lean_right",
-      "lean_source": "draft-editorial-2026-09"
+      "lean": "center",
+      "lean_source": "draft-editorial-2026-09-rev2",
+      "lean_note": "Radio más escuchada; no se agrupa con Edwards. Centro, no derechista de catálogo."
     },
     {
       "id": "latercera",
@@ -89,8 +90,9 @@
       "feeds": [
         "https://www.ciperchile.cl/feed/"
       ],
-      "lean": "left",
-      "lean_source": "draft-editorial-2026-09"
+      "lean": "lean_left",
+      "lean_source": "draft-editorial-2026-09-rev2",
+      "lean_note": "Investigación, no prensa de partido. Centro-izquierda, no izquierda dura."
     },
     {
       "id": "exante",
@@ -123,8 +125,9 @@
       "feeds": [
         "https://radio.uchile.cl/feed/"
       ],
-      "lean": "left",
-      "lean_source": "draft-editorial-2026-09"
+      "lean": "lean_left",
+      "lean_source": "draft-editorial-2026-09-rev2",
+      "lean_note": "Radio universitaria. Centro-izquierda académica, no El Siglo."
     },
     {
       "id": "adn",
@@ -236,10 +239,11 @@
       "ownership": "independiente",
       "gov_relation": "sin_dato",
       "region": "nacional",
-      "ingest": "rss",
-      "mvp": false,
+      "ingest": "sitemap",
+      "mvp": true,
       "feeds": [],
-      "notes": "RSS WordPress 404 en sep 2026 (/feed/, /dia/feed/, /noticias/feed/). Pendiente sitemap o JSON.",
+      "sitemaps": ["https://www.elmostrador.cl/sitemap_news.xml"],
+      "notes": "RSS WordPress 404. Ingesta por news sitemap de robots.txt. Solo título + URL.",
       "lean": "lean_left",
       "lean_source": "draft-editorial-2026-09"
     },
@@ -269,10 +273,12 @@
       "ownership": "edwards",
       "gov_relation": "sin_dato",
       "region": "nacional",
-      "ingest": "pending",
-      "mvp": false,
+      "ingest": "sitemap",
+      "mvp": true,
       "feeds": [],
-      "notes": "RSS público inestable. Siguiente: cliente JSON (patrón datamedios), no scrape genérico.",
+      "sitemaps": ["https://www.emol.com/sitemap/sitemapIndex.xml"],
+      "robots": "https://www.emol.com/robots.txt",
+      "notes": "News sitemap de robots.txt (Google). Solo título + URL. No cuerpo ni paywall.",
       "lean": "right",
       "lean_source": "draft-editorial-2026-09"
     },
@@ -331,10 +337,12 @@
       "ownership": "luksic",
       "gov_relation": "sin_dato",
       "region": "nacional",
-      "ingest": "youtube",
-      "mvp": false,
+      "ingest": "sitemap",
+      "mvp": true,
       "feeds": [],
-      "notes": "Sin RSS público estable. Fase TV: YouTube Data API.",
+      "sitemaps": ["https://www.t13.cl/sitemap.xml"],
+      "listings": ["https://www.t13.cl/", "https://www.t13.cl/politica"],
+      "notes": "sitemap.xml de Drupal solo trae la home. Fallback: titulares de portada, sin cuerpo.",
       "lean": "center",
       "lean_source": "draft-editorial-2026-09"
     },
@@ -347,9 +355,12 @@
       "ownership": "estado",
       "gov_relation": "sin_dato",
       "region": "nacional",
-      "ingest": "youtube",
-      "mvp": false,
+      "ingest": "sitemap",
+      "mvp": true,
       "feeds": [],
+      "sitemaps": ["https://www.24horas.cl/24horas/site/sitemap_pags.xml"],
+      "listings": ["https://www.24horas.cl/"],
+      "robots": "https://www.24horas.cl/robots.txt",
       "lean": "center",
       "lean_source": "draft-editorial-2026-09"
     },
@@ -362,9 +373,11 @@
       "ownership": "bethia",
       "gov_relation": "sin_dato",
       "region": "nacional",
-      "ingest": "youtube",
-      "mvp": false,
+      "ingest": "sitemap",
+      "mvp": true,
       "feeds": [],
+      "sitemaps": ["https://www.meganoticias.cl/sitemaps/sitemap-news.xml"],
+      "robots": "https://www.meganoticias.cl/robots.txt",
       "youtube_channel": "UCkccyEbqhhM3uKOI6Shm-4Q",
       "lean": "center",
       "lean_source": "draft-editorial-2026-09"
@@ -378,9 +391,14 @@
       "ownership": "vytal",
       "gov_relation": "sin_dato",
       "region": "nacional",
-      "ingest": "youtube",
-      "mvp": false,
+      "ingest": "sitemap",
+      "mvp": true,
       "feeds": [],
+      "sitemaps": [
+        "https://www.chvnoticias.cl/sitemaps/sitemap-news.xml"
+      ],
+      "listings": ["https://www.chvnoticias.cl/"],
+      "notes": "robots.txt no publica Sitemap. Se prueban news-sitemaps; si el sitio devuelve HTML, el worker lo marca fallido.",
       "lean": "center",
       "lean_source": "draft-editorial-2026-09"
     },
@@ -393,11 +411,13 @@
       "ownership": "carey",
       "gov_relation": "sin_dato",
       "region": "nacional",
-      "ingest": "pending",
-      "mvp": false,
+      "ingest": "rss",
+      "mvp": true,
       "feeds": [
         "https://www.cnnchile.com/feed/"
       ],
+      "sitemaps": ["https://www.cnnchile.com/_files/sitemaps/sitemap_news.xml"],
+      "robots": "https://www.cnnchile.com/robots.txt",
       "lean": "center",
       "lean_source": "draft-editorial-2026-09"
     },

@@ -6,7 +6,7 @@ from concurrent.futures import ThreadPoolExecutor, as_completed
 from datetime import datetime, timezone
 from html import unescape
 from typing import Any
-from urllib.parse import parse_qsl, urlencode, urlparse, urlunparse
+from urllib.parse import parse_qsl, urlencode, urljoin, urlparse, urlunparse
 
 import feedparser
 import httpx
@@ -114,35 +114,105 @@ def parse_feed(xml_text: str, outlet: dict[str, Any], feed_url: str) -> list[dic
     return articles
 
 
+def _jobs_for(outlet: dict[str, Any]) -> list[tuple[str, str]]:
+    jobs: list[tuple[str, str]] = []
+    for url in outlet.get("feeds") or []:
+        jobs.append(("rss", url))
+    for url in outlet.get("sitemaps") or []:
+        jobs.append(("sitemap", url))
+    for url in outlet.get("listings") or []:
+        jobs.append(("listing", url))
+    return jobs
+
+
+_LISTING_A = re.compile(r"""<a[^>]+href=["']([^"']+)["'][^>]*>(.*?)</a>""", re.I | re.S)
+
+
+def parse_listing(html_text: str, outlet: dict[str, Any], page_url: str) -> list[dict[str, Any]]:
+    """Solo titulares y URLs de una portada. No baja el cuerpo de la nota."""
+    from laverdad.sitemap import articles_from_sitemap_entries, looks_like_article
+
+    entries: list[dict[str, str]] = []
+    seen: set[str] = set()
+    for href, inner in _LISTING_A.findall(html_text or ""):
+        abs_url = canonicalize_url(urljoin(page_url, href))
+        title = strip_html(inner)
+        if not looks_like_article(abs_url) or len(title) < 22 or abs_url in seen:
+            continue
+        seen.add(abs_url)
+        entries.append({"url": abs_url, "title": title, "published_at": ""})
+    return articles_from_sitemap_entries(entries, outlet, page_url, limit=40)
+
+
+def _ingest_sitemap(outlet: dict[str, Any], sitemap_url: str, *, timeout: float) -> tuple[list[dict[str, Any]], str | None]:
+    from laverdad.sitemap import articles_from_sitemap_entries, parse_sitemap_xml, pick_child_sitemaps
+
+    xml_text, error = fetch_feed(sitemap_url, timeout=timeout)
+    if error:
+        return [], error
+    children, entries = parse_sitemap_xml(xml_text)
+    if children:
+        entries = []
+        last_error = None
+        for child in pick_child_sitemaps(children, limit=2):
+            child_xml, child_err = fetch_feed(child, timeout=timeout)
+            if child_err:
+                last_error = child_err
+                continue
+            _, child_entries = parse_sitemap_xml(child_xml)
+            entries.extend(child_entries)
+        if not entries:
+            return [], last_error or "sitemap index sin urls"
+    items = articles_from_sitemap_entries(entries, outlet, sitemap_url)
+    return items, None if items else "sitemap sin artículos útiles"
+
+
 def ingest_outlets(outlets: list[dict[str, Any]], *, timeout: float = 12.0) -> dict[str, Any]:
     articles: list[dict[str, Any]] = []
     feed_status: list[dict[str, Any]] = []
-    jobs = [
-        (outlet, feed_url)
-        for outlet in outlets
-        for feed_url in outlet.get("feeds") or []
-    ]
+    jobs = [(outlet, kind, url) for outlet in outlets for kind, url in _jobs_for(outlet)]
 
-    def _one(outlet: dict[str, Any], feed_url: str) -> dict[str, Any]:
-        xml_text, error = fetch_feed(feed_url, timeout=timeout)
+    def _one(outlet: dict[str, Any], kind: str, url: str) -> dict[str, Any]:
+        if kind == "sitemap":
+            items, error = _ingest_sitemap(outlet, url, timeout=timeout)
+            return {
+                "outlet": outlet,
+                "feed": url,
+                "ok": not error,
+                "items": items,
+                "error": error,
+            }
+        if kind == "listing":
+            html_text, error = fetch_feed(url, timeout=timeout)
+            if error:
+                return {"outlet": outlet, "feed": url, "ok": False, "items": [], "error": error}
+            items = parse_listing(html_text, outlet, url)
+            return {
+                "outlet": outlet,
+                "feed": url,
+                "ok": bool(items),
+                "items": items,
+                "error": None if items else "portada sin titulares útiles",
+            }
+        xml_text, error = fetch_feed(url, timeout=timeout)
         if error:
             return {
                 "outlet": outlet,
-                "feed": feed_url,
+                "feed": url,
                 "ok": False,
                 "items": [],
                 "error": error,
             }
         return {
             "outlet": outlet,
-            "feed": feed_url,
+            "feed": url,
             "ok": True,
-            "items": parse_feed(xml_text, outlet, feed_url),
+            "items": parse_feed(xml_text, outlet, url),
             "error": None,
         }
 
     with ThreadPoolExecutor(max_workers=6) as pool:
-        futures = [pool.submit(_one, outlet, feed_url) for outlet, feed_url in jobs]
+        futures = [pool.submit(_one, outlet, kind, url) for outlet, kind, url in jobs]
         for future in as_completed(futures):
             row = future.result()
             parsed_articles = row["items"]

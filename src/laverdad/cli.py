@@ -32,7 +32,7 @@ def main(argv: list[str] | None = None) -> int:
         return _serve(args.port)
 
     catalog = load_catalog()
-    outlets = select_outlets(catalog, mvp_only=not args.all_rss, ingest="rss")
+    outlets = select_outlets(catalog, mvp_only=not args.all_rss)
     if not outlets:
         print("No hay outlets RSS para ingerir.", file=sys.stderr)
         return 1

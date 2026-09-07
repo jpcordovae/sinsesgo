@@ -15,6 +15,7 @@ OUT_DIR = ROOT / "data" / "out"
 PUBLIC_DIR = ROOT / "public"
 SITE_NAME = "Sin Sesgo"
 SITE_URL = "https://sinsesgo.stellaris.cl"
+CONTACT_EMAIL = "jpcordovae@gmail.com"
 
 OWNER_LABELS = {
     "edwards": "Edwards",
@@ -126,16 +127,24 @@ def _write(payload: dict[str, Any], target: Path) -> dict[str, Path]:
     html_path = target / "index.html"
     json_path.write_text(json.dumps(payload, ensure_ascii=False, indent=2), encoding="utf-8")
     html_path.write_text(render_home(payload), encoding="utf-8")
+    aviso_path = target / "aviso.html"
+    aviso_path.write_text(render_aviso(), encoding="utf-8")
     (target / "clusters.html").write_text(html_path.read_text(encoding="utf-8"), encoding="utf-8")
-    _sync_public(json_path, html_path)
-    return {"json": json_path, "html": html_path}
+    _sync_public(json_path, html_path, aviso_path)
+    return {"json": json_path, "html": html_path, "aviso": aviso_path}
 
 
-def _sync_public(json_path: Path, html_path: Path) -> None:
+def _sync_public(json_path: Path, html_path: Path, aviso_path: Path | None = None) -> None:
     """Copia el snapshot estático que Netlify publica (public/)."""
     PUBLIC_DIR.mkdir(parents=True, exist_ok=True)
     shutil.copyfile(html_path, PUBLIC_DIR / "index.html")
     shutil.copyfile(json_path, PUBLIC_DIR / "clusters.json")
+    if aviso_path and aviso_path.exists():
+        shutil.copyfile(aviso_path, PUBLIC_DIR / "aviso.html")
+    (PUBLIC_DIR / "robots.txt").write_text(
+        "User-agent: *\nAllow: /\nSitemap: https://sinsesgo.stellaris.cl/\n",
+        encoding="utf-8",
+    )
 
 
 def _analytics_snippet() -> str:
@@ -419,11 +428,12 @@ def render_home(payload: dict[str, Any]) -> str:
     <p class="lede">Bias Bar de tendencia editorial (borrador chileno) más barra de propiedad. No es AllSides ni un semáforo de verdad.</p>
     <p class="stats">{payload.get("article_count", 0)} artículos · {len(crossed)} cruzados · {payload.get("blindspot_count", 0)} puntos ciegos · {payload.get("local_count", 0)} locales · {generated}</p>
   </header>
-  <nav aria-label="Secciones">
+    <nav aria-label="Secciones">
     <button type="button" data-pane="portada" aria-current="true">Portada</button>
     <button type="button" data-pane="ciego">Punto ciego</button>
     <button type="button" data-pane="local">Local</button>
     <button type="button" data-pane="metodo">Metodología</button>
+    <button type="button" data-pane="aviso">Aviso</button>
   </nav>
   <div class="search-wrap">
     <input id="q" type="search" placeholder="Buscar suceso o pegar una URL de un medio chileno" autocomplete="off">
@@ -451,8 +461,15 @@ def render_home(payload: dict[str, Any]) -> str:
     <section id="pane-metodo" class="pane">
       {method_html}
     </section>
+    <section id="pane-aviso" class="pane">
+      {_aviso_body()}
+    </section>
     {failed_block}
   </main>
+  <footer class="note">
+    <a href="/aviso.html">Aviso legal</a> ·
+    Contacto: <a href="mailto:{CONTACT_EMAIL}">{CONTACT_EMAIL}</a>
+  </footer>
   <script>
     const INDEX = {search_index};
     const panes = document.querySelectorAll(".pane");
@@ -622,13 +639,13 @@ def _methodology(outlets: list[dict[str, Any]]) -> str:
         "<li>Factuality (Ad Fontes / MBFC): no hay licencia ni escala chilena comparable. No se copia.</li>"
         "<li>Extensión de navegador, newsletters y Alternative Media / podcasts: después.</li>"
         "<li>Mapa internacional: el recorte es Chile. Local usa la región del catálogo.</li>"
-        "<li>TV (T13, 24 Horas, Mega): YouTube Data API, siguiente paso gratuito. No se ingiere ahora.</li>"
+        "<li>TV entra por news sitemaps (XML de robots.txt), no por YouTube en este piloto.</li>"
         "</ul>"
     )
     return f"""
       <h2>Qué se adaptó de Ground News</h2>
       <p>Portada (Briefing), Bias Bar L/C/R, comparar titulares, Punto ciego, Local (región del medio o ancla geográfica en el titular), búsqueda/URL, cronología y un extracto de bajadas. La barra de propiedad es el equivalente de Vantage/ownership.</p>
-      <p>El lean es un <strong>borrador editorial 2026-09</strong>, no un promedio de AllSides + Ad Fontes + MBFC. Se colapsa a tres cubetas. Los medios sin lean no entran al porcentaje.</p>
+      <p>El lean es un <strong>borrador editorial 2026-09-rev2</strong>, no un promedio de AllSides + Ad Fontes + MBFC. Se colapsa a tres cubetas. Los medios sin lean no entran al porcentaje. CIPER y Radio UChile son centro-izquierda; Bío-Bío es centro (no Edwards).</p>
       <p>Punto ciego (Chile): ≥3 medios tasados, un lado ≤15% y el otro ≥33%. Ground News usa umbrales pensados para decenas de fuentes estadounidenses; con 2 medios casi todo sería “ciego”.</p>
       <h3>Catálogo</h3>
       <table class="method">
@@ -638,3 +655,41 @@ def _methodology(outlets: list[dict[str, Any]]) -> str:
       <h3>Qué no se porta todavía</h3>
       {skip}
     """
+
+
+def _aviso_body() -> str:
+    mail = html.escape(CONTACT_EMAIL)
+    return f"""
+      <h2>Aviso legal</h2>
+      <p><strong>Sin Sesgo</strong> es un agregador de cobertura noticiosa sobre Chile. No es un medio que publique reportajes propios ni un semáforo de verdad.</p>
+      <p>De cada nota guardamos únicamente <strong>título, bajada (máximo 400 caracteres) y URL</strong>. No almacenamos el cuerpo del artículo, no bypaseamos paywalls y no hacemos clipping de la obra completa. El enlace lleva al sitio original. Eso es lo que permite la Ley 17.336 para un agregador: citar, no reproducir.</p>
+      <p>La tendencia izquierda / centro / derecha es un <strong>criterio editorial chileno</strong> del catálogo, no un rating de AllSides, Ad Fontes ni Media Bias/Fact Check. Independiente describe propiedad, no neutralidad.</p>
+      <p>Los sitemaps XML que publican los medios para Google (robots.txt) se usan solo para descubrir URL y titulares. No se scrapea el HTML de la nota.</p>
+      <h2>Contacto</h2>
+      <p>Para correcciones de catálogo, reclamos de titulares o baja de un enlace: <a href="mailto:{mail}">{mail}</a>.</p>
+    """
+
+
+def render_aviso() -> str:
+    return f"""<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Aviso legal · Sin Sesgo</title>
+  <style>
+    body {{ margin: 0; font-family: "Iowan Old Style", Georgia, serif; background: #f4f1ea; color: #1c1b19; }}
+    main {{ max-width: 720px; margin: 0 auto; padding: 2rem 1.25rem 3rem; }}
+    a {{ color: #1f4d6d; }}
+    p {{ line-height: 1.5; color: #5c5852; }}
+    .brand {{ font-family: ui-sans-serif, system-ui, sans-serif; letter-spacing: 0.12em; text-transform: uppercase; font-size: 0.72rem; color: #5c5852; }}
+  </style>
+</head>
+<body>
+  <main>
+    <p class="brand"><a href="/">Sin Sesgo · Chile</a></p>
+    {_aviso_body()}
+  </main>
+</body>
+</html>
+"""

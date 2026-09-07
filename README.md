@@ -25,7 +25,7 @@ Comandos: `ingest` (baja feeds y agrupa) · `render` (regenera HTML desde `data/
 Salida local: `data/out/index.html` y `data/out/clusters.json` (gitignorados).  
 Snapshot que publica Netlify: `public/index.html` y `public/clusters.json` (lo escribe el worker al renderizar).
 
-Catálogo: `data/outlets.json`. TV (T13, 24 Horas, Mega) y Emol quedan en `pending` / `youtube` a propósito.
+Catálogo: `data/outlets.json`. Emol, El Mostrador y TV (T13, 24 Horas, Mega, CNN Chile) entran por **news sitemaps** (XML de robots.txt): solo título + URL. Aviso legal: `/aviso.html`. Contacto: jpcordovae@gmail.com.
 
 ## Cómo se actualiza el sitio
 

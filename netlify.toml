@@ -20,6 +20,11 @@
   to = "/"
   status = 301
 
+[[redirects]]
+  from = "/aviso"
+  to = "/aviso.html"
+  status = 200
+
 [[headers]]
   for = "/*"
   [headers.values]
