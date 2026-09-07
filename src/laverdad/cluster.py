@@ -253,6 +253,7 @@ def compare_headlines(members: list[dict[str, Any]]) -> dict[str, dict[str, str]
             "url": member.get("url") or "",
             "outlet_name": member.get("outlet_name") or "",
             "lean": member.get("lean") or bucket,
+            "tone": (member.get("tone") or {}).get("label"),
         }
     return picked
 
@@ -330,6 +331,10 @@ def chronology(members: list[dict[str, Any]]) -> list[dict[str, Any]]:
 
 
 def annotate_story(index: int, members: list[dict[str, Any]]) -> dict[str, Any]:
+    from laverdad.style import stamp_style, story_entities, story_tone_mix
+
+    for member in members:
+        stamp_style(member)
     unique = unique_members(members)
     mix = lean_mix(unique)
     regions = sorted({m.get("region") or "nacional" for m in unique})
@@ -356,6 +361,8 @@ def annotate_story(index: int, members: list[dict[str, Any]]) -> dict[str, Any]:
         "is_local": catalog_local or bool(hinted),
         "summary": extractive_summary(unique),
         "chronology": chronology(unique),
+        "entities": story_entities(unique),
+        "tone_mix": story_tone_mix(unique),
         "outlets": [m["outlet_id"] for m in unique],
         "articles": members,
     }

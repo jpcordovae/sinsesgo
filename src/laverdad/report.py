@@ -415,6 +415,21 @@ def render_home(payload: dict[str, Any]) -> str:
       color: var(--muted);
       font-size: 0.9rem;
     }}
+    .chips {{ display: flex; flex-wrap: wrap; gap: 0.35rem; margin: 0 0 0.7rem; }}
+    .chips span {{
+      font-family: ui-sans-serif, system-ui, sans-serif;
+      font-size: 0.68rem;
+      letter-spacing: 0.03em;
+      border: 1px solid var(--line);
+      padding: 0.12rem 0.4rem;
+      color: var(--muted);
+    }}
+    .tone {{
+      font-family: ui-sans-serif, system-ui, sans-serif;
+      font-size: 0.68rem;
+      color: var(--muted);
+      margin-left: 0.35rem;
+    }}
     .hidden {{ display: none !important; }}
     @media (max-width: 700px) {{
       .compare {{ grid-template-columns: 1fr; }}
@@ -559,8 +574,9 @@ def _compare_block(story: dict[str, Any]) -> str:
         item = compare.get(side)
         label = BUCKET_LABELS[side]
         if item:
+            tone = f'<span class="tone">{html.escape(item.get("tone") or "")}</span>' if item.get("tone") else ""
             body = (
-                f'<p><span class="source">{html.escape(item.get("outlet_name") or "")}</span>'
+                f'<p><span class="source">{html.escape(item.get("outlet_name") or "")}{tone}</span>'
                 f'<a href="{html.escape(item.get("url") or "")}">{html.escape(item.get("title") or "")}</a></p>'
             )
         else:
@@ -592,12 +608,24 @@ def _story_card(story: dict[str, Any], badge: str | None = None, *, with_id: boo
         owner_label = OWNER_LABELS.get(article.get("ownership", ""), article.get("ownership", ""))
         lean_label = LEAN_LABELS.get(article.get("lean") or "", "")
         extra = f" · {lean_label}" if lean_label else ""
+        tone = (article.get("tone") or {}).get("label")
+        tone_html = f'<span class="tone">{html.escape(tone)}</span>' if tone else ""
         headlines.append(
             f"""<li>
-              <span class="source">{html.escape(article.get("outlet_name", ""))} · {html.escape(str(owner_label))}{html.escape(extra)}</span>
+              <span class="source">{html.escape(article.get("outlet_name", ""))} · {html.escape(str(owner_label))}{html.escape(extra)}{tone_html}</span>
               <a href="{html.escape(article.get("url", ""))}">{html.escape(article.get("title", ""))}</a>
             </li>"""
         )
+    chips = "".join(
+        f'<span>{html.escape(row.get("name") or "")}</span>'
+        for row in (story.get("entities") or [])[:8]
+    )
+    chips_html = f'<div class="chips">{chips}</div>' if chips else ""
+    tone_mix = story.get("tone_mix") or {}
+    TONE_LABELS = {"neg": "Negativo", "neu": "Neutro", "pos": "Positivo"}
+    TONE_COLORS = {"neg": "#8A4A42", "neu": "#8A8680", "pos": "#4A6B4A"}
+    tone_bar, tone_legend = _mix_bar(tone_mix, TONE_COLORS, TONE_LABELS, "owner")
+    tone_block = f"{tone_bar}<div class='legend'>{tone_legend} · tono hedónico de las bajadas</div>" if tone_mix else ""
     chrono_items = "".join(
         f"<li>{html.escape((row.get('published_at') or '')[:16])} · {html.escape(row.get('outlet_name') or '')}: {html.escape(row.get('title') or '')}</li>"
         for row in story.get("chronology") or []
@@ -609,8 +637,10 @@ def _story_card(story: dict[str, Any], badge: str | None = None, *, with_id: boo
     <article class="story" {id_attr}data-id="{sid}">
       {badge_html}
       <h2>{html.escape(story.get("title", ""))}</h2>
+      {chips_html}
       {lean_block}
       {owner_block}
+      {tone_block}
       {summary_html}
       {_compare_block(story)}
       <ul class="headlines">{"".join(headlines)}</ul>
@@ -646,6 +676,7 @@ def _methodology(outlets: list[dict[str, Any]]) -> str:
       <h2>Qué se adaptó de Ground News</h2>
       <p>Portada (Briefing), Bias Bar L/C/R, comparar titulares, Punto ciego, Local (región del medio o ancla geográfica en el titular), búsqueda/URL, cronología y un extracto de bajadas. La barra de propiedad es el equivalente de Vantage/ownership.</p>
       <p>El lean es un <strong>borrador editorial 2026-09-rev2</strong>, no un promedio de AllSides + Ad Fontes + MBFC. Se colapsa a tres cubetas. Los medios sin lean no entran al porcentaje. CIPER y Radio UChile son centro-izquierda; Bío-Bío es centro (no Edwards).</p>
+      <p>Sobre título + bajada se marcan <strong>entidades</strong> (personas, instituciones, lugares) y un <strong>tono</strong> liviano: valencia hedónica (negativo / neutro / positivo) y registro (institucional / duro / emocional). Eso compara cobertura; <em>no</em> decide si dos notas son el mismo suceso.</p>
       <p>Punto ciego (Chile): ≥3 medios tasados, un lado ≤15% y el otro ≥33%. Ground News usa umbrales pensados para decenas de fuentes estadounidenses; con 2 medios casi todo sería “ciego”.</p>
       <h3>Catálogo</h3>
       <table class="method">
