@@ -15,5 +15,7 @@ public/aviso.html
 public/history.json
 public/robots.txt
 .cursor/
+!.cursor/rules/
+!.cursor/rules/**
 .idea/
 .DS_Store
