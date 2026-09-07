@@ -7,9 +7,17 @@ import shutil
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
+from urllib.parse import quote
 
 from laverdad.catalog import BUCKET_LABELS, LEAN_LABELS, ROOT, load_catalog
 from laverdad.cluster import enrich_stories
+
+SOCIAL_KIND_LABELS = {
+    "coordinated": "Ráfaga coordinada (posible)",
+    "trending": "Pico orgánico",
+    "media": "Ráfaga de medios",
+    "none": "Sin señal",
+}
 
 OUT_DIR = ROOT / "data" / "out"
 PUBLIC_DIR = ROOT / "public"
@@ -74,8 +82,18 @@ def write_outputs(
     stories: list[dict[str, Any]],
     out_dir: Path | None = None,
 ) -> dict[str, Path]:
+    from laverdad.social import attach_social, fetch_trends_cl
+
     stories = enrich_stories(stories, catalog)
-    payload = _payload(catalog, ingest.get("feed_status") or [], ingest.get("articles") or [], stories)
+    trends = fetch_trends_cl()
+    stories = attach_social(stories, trends)
+    payload = _payload(
+        catalog,
+        ingest.get("feed_status") or [],
+        ingest.get("articles") or [],
+        stories,
+        trends=trends,
+    )
     return _write(payload, out_dir or OUT_DIR)
 
 
@@ -83,8 +101,12 @@ def render_from_json(json_path: Path | None = None, out_dir: Path | None = None)
     source = json_path or (OUT_DIR / "clusters.json")
     raw = json.loads(source.read_text(encoding="utf-8"))
     catalog = load_catalog()
+    from laverdad.social import attach_social, fetch_trends_cl
+
     stories = enrich_stories(raw.get("stories") or [], catalog)
-    payload = _payload(catalog, raw.get("feed_status") or [], [], stories)
+    trends = fetch_trends_cl()
+    stories = attach_social(stories, trends)
+    payload = _payload(catalog, raw.get("feed_status") or [], [], stories, trends=trends)
     payload["generated_at"] = raw.get("generated_at") or payload["generated_at"]
     payload["article_count"] = raw.get("article_count") or payload["article_count"]
     return _write(payload, out_dir or OUT_DIR)
@@ -95,6 +117,7 @@ def _payload(
     feed_status: list[dict[str, Any]],
     articles: list[dict[str, Any]],
     stories: list[dict[str, Any]],
+    trends: list[dict[str, Any]] | None = None,
 ) -> dict[str, Any]:
     return {
         "generated_at": datetime.now(timezone.utc).isoformat(),
@@ -105,6 +128,7 @@ def _payload(
         "multi_source_count": sum(1 for story in stories if story["source_count"] >= 2),
         "blindspot_count": sum(1 for story in stories if story.get("blindspot")),
         "local_count": sum(1 for story in stories if story.get("is_local")),
+        "trends": list(trends or []),
         "outlets": [
             {
                 "id": row["id"],
@@ -183,6 +207,7 @@ def render_home(payload: dict[str, Any]) -> str:
     )
     local_html = "".join(_story_card(story, with_id=False) for story in locals_)
     method_html = _methodology(payload.get("outlets") or [])
+    redes_html = _redes_pane(payload)
     search_index = json.dumps(
         [
             {
@@ -193,6 +218,14 @@ def render_home(payload: dict[str, Any]) -> str:
                 "sources": story.get("source_count", 0),
                 "blindspot": story.get("blindspot"),
                 "local": bool(story.get("is_local")),
+                "kind": (story.get("social") or {}).get("kind") or "none",
+                "tokens": " ".join(
+                    [
+                        story.get("title") or "",
+                        *(e.get("name") or "" for e in (story.get("entities") or [])),
+                        *(a.get("title") or "" for a in (story.get("articles") or [])[:8]),
+                    ]
+                ).strip(),
             }
             for story in stories
         ],
@@ -430,6 +463,86 @@ def render_home(payload: dict[str, Any]) -> str:
       color: var(--muted);
       margin-left: 0.35rem;
     }}
+    .social {{
+      display: flex;
+      flex-wrap: wrap;
+      align-items: baseline;
+      gap: 0.35rem 0.55rem;
+      margin: 0 0 0.55rem;
+      font-family: ui-sans-serif, system-ui, sans-serif;
+    }}
+    .social-chip {{
+      display: inline-block;
+      font-size: 0.68rem;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      border: 1px solid var(--line);
+      padding: 0.15rem 0.4rem;
+      color: var(--muted);
+    }}
+    .social-coordinated .social-chip {{
+      border-color: #8A4A42;
+      color: #8A4A42;
+      background: #f7eeeb;
+    }}
+    .social-trending .social-chip {{
+      border-color: #2F6F4E;
+      color: #2F5F46;
+      background: #eef6f1;
+    }}
+    .social-media .social-chip {{
+      border-color: #3D6A9A;
+      color: #3D6A9A;
+      background: #eef3f8;
+    }}
+    .social-hint {{ font-size: 0.72rem; color: var(--muted); }}
+    .social a {{ font-size: 0.72rem; color: var(--link); text-decoration: none; }}
+    .social a:hover {{ text-decoration: underline; }}
+    .paste-box {{
+      border: 1px solid var(--line);
+      background: var(--card);
+      padding: 0.9rem 1.1rem;
+      margin: 0 0 1.25rem;
+    }}
+    .paste-box h3 {{
+      font-family: ui-sans-serif, system-ui, sans-serif;
+      font-size: 0.78rem;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      margin: 0 0 0.4rem;
+    }}
+    .paste-box p {{ font-size: 0.86rem; color: var(--muted); margin: 0 0 0.65rem; }}
+    .paste-box textarea {{
+      width: 100%;
+      min-height: 6.5rem;
+      font-family: ui-sans-serif, system-ui, sans-serif;
+      font-size: 0.88rem;
+      padding: 0.65rem 0.8rem;
+      border: 1px solid var(--line);
+      background: #fff;
+      resize: vertical;
+    }}
+    .paste-box button {{
+      font-family: ui-sans-serif, system-ui, sans-serif;
+      font-size: 0.78rem;
+      margin-top: 0.55rem;
+      border: 1px solid var(--ink);
+      background: var(--ink);
+      color: var(--card);
+      padding: 0.4rem 0.75rem;
+      cursor: pointer;
+    }}
+    ol.trends {{ padding-left: 1.2rem; margin: 0 0 1.4rem; }}
+    ol.trends li {{ margin: 0.45rem 0; }}
+    ol.trends a {{ color: var(--ink); text-decoration: none; }}
+    ol.trends a:hover {{ color: var(--link); }}
+    ul.trend-news {{
+      list-style: none;
+      padding: 0.2rem 0 0;
+      margin: 0;
+      font-size: 0.82rem;
+      color: var(--muted);
+    }}
     .hidden {{ display: none !important; }}
     @media (max-width: 700px) {{
       .compare {{ grid-template-columns: 1fr; }}
@@ -447,6 +560,7 @@ def render_home(payload: dict[str, Any]) -> str:
     <button type="button" data-pane="portada" aria-current="true">Portada</button>
     <button type="button" data-pane="ciego">Punto ciego</button>
     <button type="button" data-pane="local">Local</button>
+    <button type="button" data-pane="redes">Redes</button>
     <button type="button" data-pane="metodo">Metodología</button>
     <button type="button" data-pane="aviso">Aviso</button>
   </nav>
@@ -472,6 +586,9 @@ def render_home(payload: dict[str, Any]) -> str:
     <section id="pane-local" class="pane">
       <p class="source">Medios regionales del catálogo o sucesos con ancla geográfica chilena</p>
       {local_html or empty_local}
+    </section>
+    <section id="pane-redes" class="pane">
+      {redes_html}
     </section>
     <section id="pane-metodo" class="pane">
       {method_html}
@@ -528,6 +645,90 @@ def render_home(payload: dict[str, Any]) -> str:
       }});
     }});
 
+    const STOP = new Set("a al como con de del el en es esta este la las lo los me o para pero por que se sin su sus un una y ya chile".split(" "));
+    function foldEs(value) {{
+      return String(value || "").normalize("NFD").replace(/[\\u0300-\\u036f]/g, "").toLowerCase();
+    }}
+    function tokensOf(value) {{
+      return (foldEs(value).match(/[a-z0-9]{{3,}}/g) || []).filter((w) => !STOP.has(w));
+    }}
+    function tokenKey(list) {{
+      return [...new Set(list)].sort().join(" ");
+    }}
+    function scoreForward(text) {{
+      const paste = tokensOf(text);
+      if (paste.length < 2) return [];
+      const pasteSet = new Set(paste);
+      const pasteKey = tokenKey(paste);
+      return INDEX.map((row) => {{
+        const rowToks = tokensOf(row.tokens || row.title || "");
+        const rowSet = new Set(rowToks);
+        let shared = 0;
+        pasteSet.forEach((w) => {{ if (rowSet.has(w)) shared += 1; }});
+        const denom = Math.min(pasteSet.size, rowSet.size || 1);
+        const overlap = denom ? shared / denom : 0;
+        const exact = Boolean(pasteKey) && pasteKey === tokenKey(rowToks);
+        return {{ row, shared, score: exact ? 1 : overlap }};
+      }}).filter((x) => x.shared >= 2 || x.score >= 0.34)
+        .sort((a, b) => b.score - a.score || b.shared - a.shared);
+    }}
+    function jumpToStory(id) {{
+      const live = document.getElementById("story-" + id);
+      if (!live) return false;
+      show("portada");
+      live.scrollIntoView({{ behavior: "smooth", block: "start" }});
+      return true;
+    }}
+    function renderForwardHits(matches) {{
+      const box = document.getElementById("fwd-hits");
+      if (!box) return;
+      box.innerHTML = matches.length
+        ? matches.slice(0, 12).map((x) => {{
+            const extra = x.row.sources >= 2 ? x.row.sources + " medios" : "1 medio";
+            return "<li data-id='" + x.row.id + "'><span class='source'>" + extra + "</span><a href='#story-" + x.row.id + "'>" + escapeHtml(x.row.title) + "</a></li>";
+          }}).join("")
+        : "";
+    }}
+    const fwd = document.getElementById("fwd");
+    const fwdGo = document.getElementById("fwd-go");
+    const fwdStatus = document.getElementById("fwd-status");
+    function runForward() {{
+      const text = ((fwd && fwd.value) || "").trim();
+      if (!text) {{
+        if (fwdStatus) fwdStatus.textContent = "Pega el texto del reenvío.";
+        return;
+      }}
+      const matches = scoreForward(text);
+      if (fwdStatus) {{
+        fwdStatus.textContent = matches.length
+          ? matches.length + " suceso(s) con vocabulario parecido. No leemos WhatsApp: solo este texto."
+          : "Ningún suceso de esta tanda comparte suficientes palabras.";
+      }}
+      renderForwardHits(matches);
+      if (matches[0] && jumpToStory(matches[0].row.id)) return;
+      show("search");
+      hits.innerHTML = matches.length
+        ? matches.slice(0, 20).map((x) => {{
+            const extra = x.row.sources >= 2 ? x.row.sources + " medios" : "1 medio";
+            return "<li data-id='" + x.row.id + "'><span class='source'>" + extra + "</span><a href='#story-" + x.row.id + "'>" + escapeHtml(x.row.title) + "</a></li>";
+          }}).join("")
+        : "<li class='empty'>Ningún suceso coincide con ese reenvío en esta tanda.</li>";
+      hitCards.innerHTML = "";
+    }}
+    if (fwdGo) fwdGo.addEventListener("click", runForward);
+    if (fwd) fwd.addEventListener("keydown", (ev) => {{
+      if (ev.key === "Enter" && (ev.ctrlKey || ev.metaKey)) runForward();
+    }});
+    function onStoryLink(ev) {{
+      const a = ev.target.closest("a[href^='#story-']");
+      if (!a) return;
+      const id = (a.getAttribute("href") || "").replace("#story-", "");
+      if (jumpToStory(id)) ev.preventDefault();
+    }}
+    hits.addEventListener("click", onStoryLink);
+    const fwdHits = document.getElementById("fwd-hits");
+    if (fwdHits) fwdHits.addEventListener("click", onStoryLink);
+
     function escapeHtml(value) {{
       return String(value || "").replace(/[&<>"']/g, (ch) => ({{
         "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;"
@@ -545,6 +746,101 @@ def _blind_label(side: str | None) -> str:
     if side == "right":
         return "Punto ciego de la derecha"
     return "Punto ciego"
+
+
+def _social_block(story: dict[str, Any]) -> str:
+    social = story.get("social") or {}
+    kind = social.get("kind") or "none"
+    chip = SOCIAL_KIND_LABELS.get(kind, SOCIAL_KIND_LABELS["none"])
+    hints: list[str] = []
+    label = (social.get("label") or "").strip()
+    if label and label.lower() not in chip.lower() and "sin señal" not in label.lower():
+        hints.append(label)
+    if kind != "none":
+        coord = social.get("coordination")
+        copies = social.get("copy_score")
+        burst = social.get("burst") or {}
+        if coord is not None:
+            hints.append(f"índice {coord}")
+        if copies:
+            hints.append(f"copia {copies}")
+        in_2h = burst.get("in_2h")
+        if in_2h:
+            hints.append(f"{in_2h} notas en 2 h")
+    hint_html = f'<span class="social-hint">{html.escape(" · ".join(hints))}</span>' if hints else ""
+    url = social.get("trends_url") or ""
+    link = (
+        f'<a href="{html.escape(url)}" target="_blank" rel="noopener">Trends CL</a>' if url else ""
+    )
+    return (
+        f'<p class="social social-{html.escape(kind)}">'
+        f'<span class="social-chip">{html.escape(chip)}</span>'
+        f"{hint_html}{link}</p>"
+    )
+
+
+def _redes_pane(payload: dict[str, Any]) -> str:
+    trends = payload.get("trends") or []
+    stories = payload.get("stories") or []
+    rank = {"coordinated": 0, "trending": 1, "media": 2}
+    signaled = [
+        story
+        for story in stories
+        if (story.get("social") or {}).get("kind") in rank
+    ]
+    signaled.sort(
+        key=lambda story: (
+            rank.get((story.get("social") or {}).get("kind"), 9),
+            -((story.get("social") or {}).get("coordination") or 0),
+        )
+    )
+    if trends:
+        items = []
+        for trend in trends[:25]:
+            query = trend.get("query") or ""
+            traffic = trend.get("traffic") or ""
+            url = "https://trends.google.com/trends/explore?geo=CL&q=" + quote(query)
+            news = "".join(
+                f"<li>{html.escape(title)}</li>" for title in (trend.get("news") or [])[:3]
+            )
+            news_html = f'<ul class="trend-news">{news}</ul>' if news else ""
+            traffic_html = html.escape(traffic) if traffic else "Trends CL"
+            items.append(
+                f'<li><a href="{html.escape(url)}" target="_blank" rel="noopener">{html.escape(query)}</a>'
+                f'<span class="source">{traffic_html}</span>{news_html}</li>'
+            )
+        trends_html = f'<ol class="trends">{"".join(items)}</ol>'
+    else:
+        trends_html = (
+            "<p class='empty'>Google Trends CL no respondió en esta tanda. "
+            "El resto de la cobertura sigue igual.</p>"
+        )
+    cards = "".join(
+        _story_card(story, badge=(story.get("social") or {}).get("label"), with_id=False)
+        for story in signaled[:40]
+    )
+    empty_sig = (
+        "<p class='empty'>Ningún suceso de esta tanda coincide con Trends CL "
+        "ni muestra ráfaga de medios.</p>"
+    )
+    paste = """
+      <div class="paste-box">
+        <h3>Me lo mandaron</h3>
+        <p>Pega un reenvío (WhatsApp, mail o captura en texto). No leemos tu WhatsApp:
+        solo comparamos las palabras que pegas con los titulares de esta tanda.</p>
+        <textarea id="fwd" placeholder="Pega aquí el mensaje reenviado…"></textarea>
+        <button type="button" id="fwd-go">Buscar suceso</button>
+        <p id="fwd-status" class="empty"></p>
+        <ul id="fwd-hits" class="hits"></ul>
+      </div>
+    """
+    return f"""
+      {paste}
+      <p class="source">Google Trends Chile · RSS público · no es ranking de redes sociales</p>
+      {trends_html}
+      <p class="source">Sucesos con señal · pico orgánico, ráfaga de medios o ráfaga coordinada (posible)</p>
+      {cards or empty_sig}
+    """
 
 
 def _mix_bar(mix: dict[str, Any], colors: dict[str, str], labels: dict[str, str], extra_class: str = "") -> tuple[str, str]:
@@ -621,6 +917,7 @@ def _story_card(story: dict[str, Any], badge: str | None = None, *, with_id: boo
         for row in (story.get("entities") or [])[:8]
     )
     chips_html = f'<div class="chips">{chips}</div>' if chips else ""
+    social_html = _social_block(story)
     tone_mix = story.get("tone_mix") or {}
     TONE_LABELS = {"neg": "Negativo", "neu": "Neutro", "pos": "Positivo"}
     TONE_COLORS = {"neg": "#8A4A42", "neu": "#8A8680", "pos": "#4A6B4A"}
@@ -636,6 +933,7 @@ def _story_card(story: dict[str, Any], badge: str | None = None, *, with_id: boo
     return f"""
     <article class="story" {id_attr}data-id="{sid}">
       {badge_html}
+      {social_html}
       <h2>{html.escape(story.get("title", ""))}</h2>
       {chips_html}
       {lean_block}
@@ -677,6 +975,12 @@ def _methodology(outlets: list[dict[str, Any]]) -> str:
       <p>Portada (Briefing), Bias Bar L/C/R, comparar titulares, Punto ciego, Local (región del medio o ancla geográfica en el titular), búsqueda/URL, cronología y un extracto de bajadas. La barra de propiedad es el equivalente de Vantage/ownership.</p>
       <p>El lean es un <strong>borrador editorial 2026-09-rev2</strong>, no un promedio de AllSides + Ad Fontes + MBFC. Se colapsa a tres cubetas. Los medios sin lean no entran al porcentaje. CIPER y Radio UChile son centro-izquierda; Bío-Bío es centro (no Edwards).</p>
       <p>Sobre título + bajada se marcan <strong>entidades</strong> (personas, instituciones, lugares) y un <strong>tono</strong> liviano: valencia hedónica (negativo / neutro / positivo) y registro (institucional / duro / emocional). Eso compara cobertura; <em>no</em> decide si dos notas son el mismo suceso.</p>
+      <h3>Señales de redes (Trends CL)</h3>
+      <p>Google Trends Chile se lee del RSS público <code>trends.google.com/trending/rss?geo=CL</code>. No usamos pytrends ni APIs de X o Meta. Un suceso “pega” a un trend si comparte al menos dos tokens (palabras de 4+ letras, sin stopwords) con la consulta o sus noticias asociadas.</p>
+      <p><strong>Ráfaga de medios</strong>: varias notas del mismo cluster en una ventana corta (p. ej. ≥3 en 2 h). Mide sincronía editorial, no cuentas falsas.</p>
+      <p><strong>Copia</strong> (copy-score 0–1): fracción de pares de titulares casi iguales (plantilla / cable). Un score alto no prueba bots; solo plantilla compartida.</p>
+      <p><strong>Índice de coordinación</strong> 0–1 = 0,55 × ráfaga + 0,45 × copia. Etiquetas: <em>pico orgánico</em> (coincide con Trends CL), <em>ráfaga coordinada (posible)</em> (trend + índice ≥ 0,55), <em>ráfaga de medios</em> (ráfaga alta sin trend), <em>sin señal</em>. Nunca identificamos cuentas como bots.</p>
+      <p>WhatsApp y otras redes cerradas no se scrapean. Si te reenviaron un mensaje, pégalo en <strong>Redes → Me lo mandaron</strong>: comparamos tokens con los titulares de esta tanda.</p>
       <p>Punto ciego (Chile): ≥3 medios tasados, un lado ≤15% y el otro ≥33%. Ground News usa umbrales pensados para decenas de fuentes estadounidenses; con 2 medios casi todo sería “ciego”.</p>
       <h3>Catálogo</h3>
       <table class="method">
