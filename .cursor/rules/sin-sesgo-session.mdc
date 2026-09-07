@@ -1,0 +1,31 @@
+---
+description: Current session state and next work for Sin Sesgo handoff
+alwaysApply: true
+---
+
+# Session handoff (2026-09-07)
+
+HEAD when saved: `aa2ebe3` on `main` (ficha + radar + semanario + visual redesign). Live follows Actions after push.
+
+## Shipped this arc
+- Trends CL RSS (`social.py`) → burst + copy-score → coordination index; Redes tab + paste forward
+- Ficha facts: lean / ownership / tone / copy / social / Trends link
+- Radar: ranking, blindspots, orphan trends, “me lo mandaron”
+- Semanario: `history.py` compact daily snapshots (no bodies); first-week empty state intentional
+- Home: brand-first hero, Fraunces + Source Sans, cool teal editorial (avoid cream/terracotta AI cliché)
+
+## Known quality gaps (next agent)
+1. Trends matching too loose (≥2 shared tokens) → false hits (e.g. weather ↔ “meteored”, politics ↔ sports queries)
+2. Some TV listing scrapes put lead/body-ish text into titles → truncate in UI exists; fix at ingest
+3. Clustering still occasionally splits same event (e.g. Duco); keep greedy seed-title strictness, no union-find mega-blobs
+4. Semanario needs ≥2 days of `history.json` before recurring threads appear
+5. Optional later: GA4 (`GA_MEASUREMENT_ID`), YouTube; not WhatsApp scrape
+
+## Runbook
+```
+$env:PYTHONPATH='E:\Projects\LaVerdad\src'
+python -u -m laverdad.cli render          # from data/out/clusters.json
+python -u -m laverdad.cli ingest --timeout 20
+python -u -m laverdad.cli serve --port 8765
+```
+Push to `main` to publish. Prefer render-only for UI changes.

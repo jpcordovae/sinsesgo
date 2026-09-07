@@ -1,0 +1,26 @@
+---
+description: Sin Sesgo product identity, hard constraints, and deploy facts
+alwaysApply: true
+---
+
+# Sin Sesgo (ex-LaVerdad)
+
+Public brand **Sin Sesgo**. Python package still `laverdad`. Live: https://sinsesgo.stellaris.cl (also sinsesgo.netlify.app). Repo: https://github.com/jpcordovae/sinsesgo. Contact: jpcordovae@gmail.com.
+
+## One-line product
+**El mismo suceso. Distintos medios. Cómo lo cuentan.**
+
+Chile news coverage comparator (Ground News–style): Bias Bar L/C/R (curated Chilean editorial draft, not AllSides/Ad Fontes/MBFC), ownership, punto ciego, local, Trends CL social signals, ficha / radar / semanario.
+
+## Hard constraints
+- Persist only title + lead ≤400 + URL (Ley 17.336). No article bodies. No paywall bypass.
+- Lean = curated Chilean draft (`draft-editorial-2026-09-rev2`), not imported US ratings. Independiente = ownership, not “neutral”.
+- Never claim bots, truth, or “these accounts are bots”. Labels: pico orgánico / ráfaga coordinada (posible) / ráfaga de medios / sin señal.
+- No WhatsApp scraping / tracking accounts. Closed nets only via user-pasted “me lo mandaron”.
+- Do not commit secrets, `.env`, or tokens. Do not add pytrends as required.
+
+## Stack map
+- `src/laverdad/`: `catalog.py`, `ingest.py`, `sitemap.py`, `cluster.py`, `style.py`, `social.py`, `history.py`, `report.py`, `cli.py`
+- Catalog: `data/outlets.json` · Output: `data/out/` + `public/` (gitignored)
+- CLI: `ingest | render | serve` with `PYTHONPATH=<repo>/src`
+- Deploy: GitHub Actions → Netlify every ~30 min + on push to `main`
