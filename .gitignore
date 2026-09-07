@@ -12,6 +12,7 @@ data/out/
 public/index.html
 public/clusters.json
 public/aviso.html
+public/history.json
 public/robots.txt
 .cursor/
 .idea/
