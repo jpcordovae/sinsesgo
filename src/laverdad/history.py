@@ -13,7 +13,7 @@ from laverdad.cluster import fold, tokens
 HISTORY_NAME = "history.json"
 HISTORY_PATH = ROOT / "data" / "out" / HISTORY_NAME
 PUBLIC_HISTORY = ROOT / "public" / HISTORY_NAME
-LIVE_HISTORY_URL = "https://sinsesgo.stellaris.cl/history.json"
+LIVE_HISTORY_URL = "https://blindspot.cl/history.json"
 MAX_DAYS = 14
 MAX_STORIES = 80
 CL = ZoneInfo("America/Santiago")
@@ -113,7 +113,7 @@ def _fetch_live() -> dict[str, Any] | None:
         response = httpx.get(
             LIVE_HISTORY_URL,
             timeout=8.0,
-            headers={"User-Agent": "SinSesgo/0.1 (+https://sinsesgo.stellaris.cl)"},
+            headers={"User-Agent": "BlindSpot/0.1 (+https://blindspot.cl)"},
             follow_redirects=True,
         )
         if response.status_code != 200:

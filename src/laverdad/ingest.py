@@ -13,7 +13,7 @@ import httpx
 
 from laverdad.catalog import lean_bucket
 
-USER_AGENT = "SinSesgo/0.1 (agregador de cobertura; +https://sinsesgo.stellaris.cl)"
+USER_AGENT = "BlindSpot/0.1 (agregador de cobertura; +https://blindspot.cl)"
 TRACKING_PARAMS = {
     "utm_source",
     "utm_medium",

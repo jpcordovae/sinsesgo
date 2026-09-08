@@ -1,7 +1,7 @@
 [project]
 name = "laverdad"
 version = "0.1.0"
-description = "Sin Sesgo: agregador de cobertura noticiosa chilena (catálogo, RSS y clustering)."
+description = "Blind Spot: agregador de cobertura noticiosa chilena (catálogo, RSS y clustering)."
 readme = "README.md"
 requires-python = ">=3.11"
 dependencies = [

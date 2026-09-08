@@ -1,12 +1,12 @@
-# Sin Sesgo
+# Blind Spot
 
 Agregador de cobertura noticiosa para Chile (estilo Ground News): catálogo de medios, RSS (solo **título + bajada ≤400 caracteres + URL**) y clustering de sucesos. No guarda el cuerpo de las notas (Ley 17.336). No bypasea paywalls.
 
-Sitio: [https://sinsesgo.stellaris.cl](https://sinsesgo.stellaris.cl)
+Sitio: [https://blindspot.cl](https://blindspot.cl) (también [sinsesgo.stellaris.cl](https://sinsesgo.stellaris.cl))
 
 El lean del catálogo es un **borrador editorial chileno**, no ratings de Ground News / AllSides / Ad Fontes / MBFC.
 
-El paquete Python interno se llama `laverdad` (CLI `laverdad`); el nombre público del producto es **Sin Sesgo**.
+El paquete Python interno se llama `laverdad` (CLI `laverdad`); el nombre público del producto es **Blind Spot** (antes Sin Sesgo).
 
 ## Correr en local
 
@@ -56,10 +56,10 @@ El site id de Netlify (`sinsesgo`) ya está en el workflow. No commitear el toke
 
 ## Dominio
 
-- Producto actual: `https://sinsesgo.stellaris.cl` (también `https://sinsesgo.netlify.app`)
-- Dominio propio del producto: **`blindspot.cl`** (alias del mismo sitio Netlify `sinsesgo`)
+- Producto actual: `https://blindspot.cl` (aliases: `www.blindspot.cl`, `sinsesgo.stellaris.cl`, `sinsesgo.netlify.app`)
+- Dominio propio: **`blindspot.cl`** (sitio Netlify `sinsesgo`)
 - Apex `stellaris.cl` ya está en **Netlify DNS**.
-- En el sitio Netlify de Sin Sesgo: Domain management → aliases `blindspot.cl` + `www.blindspot.cl`.
+- En el sitio Netlify: Domain management → aliases `blindspot.cl` + `www.blindspot.cl`.
 
 ### DNS `blindspot.cl` (Netlify DNS / NSONE)
 

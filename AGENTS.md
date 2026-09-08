@@ -1,12 +1,13 @@
-# AGENTS.md — Sin Sesgo handoff
+# AGENTS.md — Blind Spot handoff
 
 For any AI taking over this repo. Product rules also live in `.cursor/rules/sin-sesgo-*.mdc`.
 
 ## Objective
 
-Build and operate **Sin Sesgo**: a Chilean multi-outlet news coverage comparator. Show how different media tell the *same* story — editorial lean (curated draft), ownership, blindspots, tone, headline homogeneity, and open-web Trends CL signals — without storing full articles or accusing accounts of being bots.
+Build and operate **Blind Spot**: a Chilean multi-outlet news coverage comparator. Show how different media tell the *same* story — editorial lean (curated draft), ownership, blindspots, tone, headline homogeneity, and open-web Trends CL signals — without storing full articles or accusing accounts of being bots.
 
 Tagline: **El mismo suceso. Distintos medios. Cómo lo cuentan.**
+Public site: **https://blindspot.cl** (package still `laverdad`; Netlify site id still `sinsesgo`).
 
 ## Non-negotiables
 
@@ -38,7 +39,7 @@ Tagline: **El mismo suceso. Distintos medios. Cómo lo cuentan.**
 
 ## State as of 2026-09-08
 
-- Live: https://sinsesgo.stellaris.cl
+- Live: https://blindspot.cl (also sinsesgo.stellaris.cl / sinsesgo.netlify.app)
 - GitHub: https://github.com/jpcordovae/sinsesgo · user `jpcordovae`
 - Catalog: **35 outlets MVP** (RSS, sitemap o listing). Actions: `ingest --all-rss --timeout 20`
 - Radios activas: BioBio, Cooperativa, UChile, ADN, Duna, Agricultura, Pauta

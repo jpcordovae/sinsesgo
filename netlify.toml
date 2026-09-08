@@ -1,11 +1,11 @@
-# Sin Sesgo: Netlify solo publica el HTML estático.
+# Blind Spot: Netlify solo publica el HTML estático.
 # Los RSS chilenos se ingieren en GitHub Actions (cron), no en el build de Netlify:
 # los builders de Netlify suelen ir lentos o timeout contra esos feeds.
 # Actions escribe public/index.html + public/clusters.json y hace commit.
 
 [build]
   publish = "public"
-  command = "python -c \"print('Sin Sesgo: snapshot listo en public/ (GitHub Actions)')\""
+  command = "python -c \"print('Blind Spot: snapshot listo en public/ (GitHub Actions)')\""
 
 [build.environment]
   PYTHON_VERSION = "3.12"

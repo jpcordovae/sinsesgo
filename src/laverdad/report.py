@@ -28,8 +28,8 @@ SOCIAL_SHORT = {
 
 OUT_DIR = ROOT / "data" / "out"
 PUBLIC_DIR = ROOT / "public"
-SITE_NAME = "Sin Sesgo"
-SITE_URL = "https://sinsesgo.stellaris.cl"
+SITE_NAME = "Blind Spot"
+SITE_URL = "https://blindspot.cl"
 CONTACT_EMAIL = "jpcordovae@gmail.com"
 TAGLINE = "El mismo suceso. Distintos medios. Cómo lo cuentan."
 SUBLINE = "Cobertura chilena, sesgo y redes — sin el artículo completo."
@@ -185,7 +185,7 @@ def _sync_public(
     if history_path and history_path.exists():
         shutil.copyfile(history_path, PUBLIC_DIR / "history.json")
     (PUBLIC_DIR / "robots.txt").write_text(
-        "User-agent: *\nAllow: /\nSitemap: https://sinsesgo.stellaris.cl/\n",
+        "User-agent: *\nAllow: /\nSitemap: https://blindspot.cl/\n",
         encoding="utf-8",
     )
 
@@ -611,7 +611,7 @@ def _aviso_body() -> str:
     mail = html.escape(CONTACT_EMAIL)
     return f"""
       <h2>Aviso legal</h2>
-      <p><strong>Sin Sesgo</strong> es un agregador de cobertura noticiosa sobre Chile. No es un medio que publique reportajes propios ni un semáforo de verdad.</p>
+      <p><strong>{html.escape(SITE_NAME)}</strong> es un agregador de cobertura noticiosa sobre Chile. No es un medio que publique reportajes propios ni un semáforo de verdad.</p>
       <p>De cada nota guardamos únicamente <strong>título, bajada (máximo 400 caracteres) y URL</strong>. No almacenamos el cuerpo del artículo, no bypaseamos paywalls y no hacemos clipping de la obra completa. El enlace lleva al sitio original.</p>
       <p>La tendencia izquierda / centro / derecha es un <strong>criterio editorial chileno</strong> del catálogo, no un rating de AllSides, Ad Fontes ni Media Bias/Fact Check. Independiente describe propiedad, no neutralidad.</p>
       <h2>Contacto</h2>
@@ -625,7 +625,7 @@ def render_aviso() -> str:
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Aviso legal · Sin Sesgo</title>
+  <title>Aviso legal · {html.escape(SITE_NAME)}</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,560;9..144,700&family=Source+Sans+3:wght@400;600;700&display=swap" rel="stylesheet">
@@ -634,7 +634,7 @@ def render_aviso() -> str:
 <body>
   <div class="sky" aria-hidden="true"></div>
   <main class="sheet aviso-page">
-    <p class="brand"><a href="/">Sin Sesgo</a></p>
+    <p class="brand"><a href="/">{html.escape(SITE_NAME)}</a></p>
     <p class="place">Aviso legal</p>
     {_aviso_body()}
   </main>
@@ -702,7 +702,7 @@ def render_home(payload: dict[str, Any], weekly: dict[str, Any] | None = None) -
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Sin Sesgo · {html.escape(TAGLINE)}</title>
+  <title>{html.escape(SITE_NAME)} · {html.escape(TAGLINE)}</title>
   <meta name="description" content="{html.escape(TAGLINE)} {html.escape(SUBLINE)}">
   <link rel="canonical" href="{SITE_URL}/">
   <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -714,7 +714,7 @@ def render_home(payload: dict[str, Any], weekly: dict[str, Any] | None = None) -
 <body>
   <div class="sky" aria-hidden="true"></div>
   <header class="mast">
-    <p class="brand">Sin Sesgo</p>
+    <p class="brand">{html.escape(SITE_NAME)}</p>
     <p class="place">Chile</p>
     <h1>{html.escape(TAGLINE)}</h1>
     <p class="sub">{html.escape(SUBLINE)}</p>
