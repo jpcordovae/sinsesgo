@@ -29,7 +29,7 @@ Catálogo: `data/outlets.json`. Emol, El Mostrador y TV (T13, 24 Horas, Mega, CN
 
 ## Cómo se actualiza el sitio
 
-**GitHub Actions** (cada 30 minutos, y al hacer push de código) corre `laverdad ingest` y sube `public/` a Netlify por API. No commitea el HTML generado.
+**GitHub Actions** (5 veces al día desde medianoche Chile, y al hacer push de código) corre `laverdad ingest` y sube `public/` a Netlify por API. No commitea el HTML generado.
 
 **Netlify** no ingiere RSS. Solo hospeda el snapshot. Los builders de Netlify suelen timeout contra feeds chilenos; Actions es el camino gratis más fiable.
 
@@ -39,7 +39,7 @@ Flujo: cron Actions → ingest/render → deploy a Netlify (sitio `sinsesgo`).
 
 | Cuenta | Uso |
 | --- | --- |
-| **GitHub** | Código, Actions (ingest/render cada 30 min). Repo: este. |
+| **GitHub** | Código, Actions (ingest/render 5×/día desde 00:00 CL). Repo: este. |
 | **Netlify** | Hosting estático de `public/` + DNS del subdominio. `stellaris.cl` ya usa Netlify DNS (NSONE). |
 | **Google** | Opcional: GA4. Más adelante YouTube Data API para TV. No se usa Cloud Run / BigQuery / News API. |
 
