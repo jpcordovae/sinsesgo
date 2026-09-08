@@ -21,6 +21,7 @@ Chile news coverage comparator (Ground News–style): Bias Bar L/C/R (curated Ch
 
 ## Stack map
 - `src/laverdad/`: `catalog.py`, `ingest.py`, `sitemap.py`, `cluster.py`, `style.py`, `social.py`, `history.py`, `report.py`, `cli.py`
-- Catalog: `data/outlets.json` · Output: `data/out/` + `public/` (gitignored)
+- Catalog: `data/outlets.json` — all outlets with RSS/sitemap/listing are MVP (`ingest --all-rss` in Actions)
+- Output: `data/out/` + `public/` (gitignored)
 - CLI: `ingest | render | serve` with `PYTHONPATH=<repo>/src`
 - Deploy: GitHub Actions → Netlify every ~30 min + on push to `main`

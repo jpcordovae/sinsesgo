@@ -36,18 +36,18 @@ Tagline: **El mismo suceso. Distintos medios. Cómo lo cuentan.**
 4. **Semanario** — multi-day archive when `public/history.json` accumulates
 5. **Ciego / Local / Metodología / Aviso**
 
-## State as of 2026-09-07
+## State as of 2026-09-08
 
 - Live: https://sinsesgo.stellaris.cl
 - GitHub: https://github.com/jpcordovae/sinsesgo · user `jpcordovae`
-- Last publish commit for this handoff: `aa2ebe3`
-- Conversation that built this: Cursor chat “Ficha, radar y semanario” / prior “Redes y Trends CL”
+- Catalog: **35 outlets MVP** (RSS, sitemap o listing). Actions: `ingest --all-rss --timeout 20`
+- Radios activas: BioBio, Cooperativa, UChile, ADN, Duna, Agricultura, Pauta
+- Paywall Edwards (Mercurio/LUN/La Segunda): solo titulares de portada cuando el listing responde
 
 ### Done recently
 
-- Social MVP + Redes UI
-- Redesign: ficha / radar / semanario + clearer hero
-- History persistence for weekly rollup
+- Social MVP + Redes UI; ficha / radar / semanario
+- Full-catalog ingest (no longer MVP-only subset)
 
 ### Open / improve next
 

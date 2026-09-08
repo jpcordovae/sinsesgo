@@ -20,6 +20,8 @@ NEWS_PATH = (
     "/deportes",
     "/tendencias",
     "/espectaculos",
+    "/article",
+    "/articles",
 )
 
 

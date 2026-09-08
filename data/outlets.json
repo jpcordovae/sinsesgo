@@ -1,8 +1,8 @@
 {
   "version": 1,
   "country": "CL",
-  "updated": "2026-09-07",
-  "notes": "Catálogo curado para el piloto Chile. lean rev2: CIPER y Radio UChile centro-izquierda; Bío-Bío centro. Sitemaps XML de robots.txt para Emol, El Mostrador y TV. No persistir cuerpos.",
+  "updated": "2026-09-08",
+  "notes": "Catálogo Chile: ingest de todos los medios con RSS/sitemap/listing. lean rev2 CIPER/Radio UChile lean_left; Bío-Bío center. Solo título + bajada ≤400 + URL. Sin cuerpos ni bypass de paywall.",
   "outlets": [
     {
       "id": "biobio",
@@ -206,12 +206,18 @@
       "ownership": "independiente",
       "gov_relation": "sin_dato",
       "region": "nacional",
-      "ingest": "rss",
-      "mvp": false,
+      "ingest": "sitemap",
+      "mvp": true,
       "feeds": [],
-      "notes": "/feed/ 404 en sep 2026. Pendiente sitemap.",
+      "notes": "WordPress /feed/ 404. News sitemap + portada (título/URL).",
       "lean": "lean_left",
-      "lean_source": "draft-editorial-2026-09"
+      "lean_source": "draft-editorial-2026-09",
+      "sitemaps": [
+        "https://www.eldinamo.cl/_files/sitemaps/sitemap_news.xml"
+      ],
+      "listings": [
+        "https://www.eldinamo.cl/"
+      ]
     },
     {
       "id": "lacuarta",
@@ -223,7 +229,7 @@
       "gov_relation": "sin_dato",
       "region": "nacional",
       "ingest": "rss",
-      "mvp": false,
+      "mvp": true,
       "feeds": [
         "https://www.lacuarta.com/arc/outboundfeeds/rss/?outputType=xml"
       ],
@@ -242,7 +248,9 @@
       "ingest": "sitemap",
       "mvp": true,
       "feeds": [],
-      "sitemaps": ["https://www.elmostrador.cl/sitemap_news.xml"],
+      "sitemaps": [
+        "https://www.elmostrador.cl/sitemap_news.xml"
+      ],
       "notes": "RSS WordPress 404. Ingesta por news sitemap de robots.txt. Solo título + URL.",
       "lean": "lean_left",
       "lean_source": "draft-editorial-2026-09"
@@ -276,7 +284,9 @@
       "ingest": "sitemap",
       "mvp": true,
       "feeds": [],
-      "sitemaps": ["https://www.emol.com/sitemap/sitemapIndex.xml"],
+      "sitemaps": [
+        "https://www.emol.com/sitemap/sitemapIndex.xml"
+      ],
       "robots": "https://www.emol.com/robots.txt",
       "notes": "News sitemap de robots.txt (Google). Solo título + URL. No cuerpo ni paywall.",
       "lean": "right",
@@ -291,12 +301,17 @@
       "ownership": "edwards",
       "gov_relation": "sin_dato",
       "region": "nacional",
-      "ingest": "pending",
-      "mvp": false,
+      "ingest": "sitemap",
+      "mvp": true,
       "feeds": [],
-      "notes": "Paywall. No extraer cuerpo.",
+      "notes": "Paywall. Solo titulares visibles de portada digital. Emol cubre el cable web Edwards.",
       "lean": "right",
-      "lean_source": "draft-editorial-2026-09"
+      "lean_source": "draft-editorial-2026-09",
+      "sitemaps": [],
+      "listings": [
+        "https://digital.elmercurio.com/",
+        "https://www.elmercurio.com/"
+      ]
     },
     {
       "id": "lun",
@@ -307,11 +322,16 @@
       "ownership": "edwards",
       "gov_relation": "sin_dato",
       "region": "nacional",
-      "ingest": "pending",
-      "mvp": false,
+      "ingest": "sitemap",
+      "mvp": true,
       "feeds": [],
       "lean": "lean_right",
-      "lean_source": "draft-editorial-2026-09"
+      "lean_source": "draft-editorial-2026-09",
+      "sitemaps": [],
+      "listings": [
+        "https://www.lun.com/"
+      ],
+      "notes": "RSS roto. Solo titulares de portada. Sin cuerpo/paywall."
     },
     {
       "id": "lasegunda",
@@ -322,11 +342,16 @@
       "ownership": "edwards",
       "gov_relation": "sin_dato",
       "region": "nacional",
-      "ingest": "pending",
-      "mvp": false,
+      "ingest": "sitemap",
+      "mvp": true,
       "feeds": [],
       "lean": "right",
-      "lean_source": "draft-editorial-2026-09"
+      "lean_source": "draft-editorial-2026-09",
+      "sitemaps": [],
+      "listings": [
+        "https://www.lasegunda.com/"
+      ],
+      "notes": "/rss es HTML. Solo titulares de portada. Sin cuerpo/paywall."
     },
     {
       "id": "t13",
@@ -340,8 +365,13 @@
       "ingest": "sitemap",
       "mvp": true,
       "feeds": [],
-      "sitemaps": ["https://www.t13.cl/sitemap.xml"],
-      "listings": ["https://www.t13.cl/", "https://www.t13.cl/politica"],
+      "sitemaps": [
+        "https://www.t13.cl/sitemap.xml"
+      ],
+      "listings": [
+        "https://www.t13.cl/",
+        "https://www.t13.cl/politica"
+      ],
       "notes": "sitemap.xml de Drupal solo trae la home. Fallback: titulares de portada, sin cuerpo.",
       "lean": "center",
       "lean_source": "draft-editorial-2026-09"
@@ -358,8 +388,12 @@
       "ingest": "sitemap",
       "mvp": true,
       "feeds": [],
-      "sitemaps": ["https://www.24horas.cl/24horas/site/sitemap_pags.xml"],
-      "listings": ["https://www.24horas.cl/"],
+      "sitemaps": [
+        "https://www.24horas.cl/24horas/site/sitemap_pags.xml"
+      ],
+      "listings": [
+        "https://www.24horas.cl/"
+      ],
       "robots": "https://www.24horas.cl/robots.txt",
       "lean": "center",
       "lean_source": "draft-editorial-2026-09"
@@ -376,7 +410,9 @@
       "ingest": "sitemap",
       "mvp": true,
       "feeds": [],
-      "sitemaps": ["https://www.meganoticias.cl/sitemaps/sitemap-news.xml"],
+      "sitemaps": [
+        "https://www.meganoticias.cl/sitemaps/sitemap-news.xml"
+      ],
       "robots": "https://www.meganoticias.cl/robots.txt",
       "youtube_channel": "UCkccyEbqhhM3uKOI6Shm-4Q",
       "lean": "center",
@@ -397,7 +433,9 @@
       "sitemaps": [
         "https://www.chvnoticias.cl/sitemaps/sitemap-news.xml"
       ],
-      "listings": ["https://www.chvnoticias.cl/"],
+      "listings": [
+        "https://www.chvnoticias.cl/"
+      ],
       "notes": "robots.txt no publica Sitemap. Se prueban news-sitemaps; si el sitio devuelve HTML, el worker lo marca fallido.",
       "lean": "center",
       "lean_source": "draft-editorial-2026-09"
@@ -416,7 +454,9 @@
       "feeds": [
         "https://www.cnnchile.com/feed/"
       ],
-      "sitemaps": ["https://www.cnnchile.com/_files/sitemaps/sitemap_news.xml"],
+      "sitemaps": [
+        "https://www.cnnchile.com/_files/sitemaps/sitemap_news.xml"
+      ],
       "robots": "https://www.cnnchile.com/robots.txt",
       "lean": "center",
       "lean_source": "draft-editorial-2026-09"
@@ -430,11 +470,18 @@
       "ownership": "copesa",
       "gov_relation": "sin_dato",
       "region": "nacional",
-      "ingest": "pending",
-      "mvp": false,
+      "ingest": "sitemap",
+      "mvp": true,
       "feeds": [],
       "lean": "right",
-      "lean_source": "draft-editorial-2026-09"
+      "lean_source": "draft-editorial-2026-09",
+      "sitemaps": [
+        "https://duna.cl/sitemaps/articles.xml"
+      ],
+      "listings": [
+        "https://www.duna.cl/"
+      ],
+      "notes": "RSS HTML/JS. Sitemap de artículos (grande); el parser corta a 50 recientes."
     },
     {
       "id": "agricultura",
@@ -445,11 +492,18 @@
       "ownership": "otro",
       "gov_relation": "sin_dato",
       "region": "nacional",
-      "ingest": "pending",
-      "mvp": false,
+      "ingest": "sitemap",
+      "mvp": true,
       "feeds": [],
       "lean": "right",
-      "lean_source": "draft-editorial-2026-09"
+      "lean_source": "draft-editorial-2026-09",
+      "sitemaps": [
+        "https://www.radioagricultura.cl/_files/sitemaps/sitemap_news.xml"
+      ],
+      "listings": [
+        "https://www.radioagricultura.cl/"
+      ],
+      "notes": "News sitemap de robots.txt + portada."
     },
     {
       "id": "pauta",
@@ -460,11 +514,19 @@
       "ownership": "otro",
       "gov_relation": "sin_dato",
       "region": "nacional",
-      "ingest": "pending",
-      "mvp": false,
+      "ingest": "sitemap",
+      "mvp": true,
       "feeds": [],
       "lean": "lean_right",
-      "lean_source": "draft-editorial-2026-09"
+      "lean_source": "draft-editorial-2026-09",
+      "sitemaps": [
+        "https://www.pauta.cl/sitemap_news.xml",
+        "https://www.pauta.cl/sitemap.xml"
+      ],
+      "listings": [
+        "https://www.pauta.cl/"
+      ],
+      "notes": "News sitemap de robots.txt."
     },
     {
       "id": "elciudadano",
@@ -476,7 +538,7 @@
       "gov_relation": "sin_dato",
       "region": "nacional",
       "ingest": "rss",
-      "mvp": false,
+      "mvp": true,
       "feeds": [
         "https://www.elciudadano.com/feed/"
       ],
@@ -493,7 +555,7 @@
       "gov_relation": "sin_dato",
       "region": "nacional",
       "ingest": "rss",
-      "mvp": false,
+      "mvp": true,
       "feeds": [
         "https://www.elsiglo.cl/feed/"
       ],
@@ -509,11 +571,16 @@
       "ownership": "edwards",
       "gov_relation": "sin_dato",
       "region": "valparaiso",
-      "ingest": "pending",
-      "mvp": false,
+      "ingest": "sitemap",
+      "mvp": true,
       "feeds": [],
       "lean": "right",
-      "lean_source": "draft-editorial-2026-09"
+      "lean_source": "draft-editorial-2026-09",
+      "sitemaps": [],
+      "listings": [
+        "https://www.mercuriovalpo.cl/"
+      ],
+      "notes": "Sitemap impresa compartido no sirve para web. Solo titulares de portada."
     },
     {
       "id": "elsur",
@@ -524,11 +591,16 @@
       "ownership": "edwards",
       "gov_relation": "sin_dato",
       "region": "biobio",
-      "ingest": "pending",
-      "mvp": false,
+      "ingest": "sitemap",
+      "mvp": true,
       "feeds": [],
       "lean": "right",
-      "lean_source": "draft-editorial-2026-09"
+      "lean_source": "draft-editorial-2026-09",
+      "sitemaps": [],
+      "listings": [
+        "https://www.elsur.cl/"
+      ],
+      "notes": "Solo titulares de portada (sin RSS útil)."
     },
     {
       "id": "estrella_antofagasta",
@@ -539,11 +611,16 @@
       "ownership": "edwards",
       "gov_relation": "sin_dato",
       "region": "antofagasta",
-      "ingest": "pending",
-      "mvp": false,
+      "ingest": "sitemap",
+      "mvp": true,
       "feeds": [],
       "lean": "right",
-      "lean_source": "draft-editorial-2026-09"
+      "lean_source": "draft-editorial-2026-09",
+      "sitemaps": [],
+      "listings": [
+        "https://www.estrellaantofagasta.cl/"
+      ],
+      "notes": "Solo titulares de portada (sin RSS útil)."
     },
     {
       "id": "rancaguino",
@@ -571,11 +648,14 @@
       "ownership": "independiente",
       "gov_relation": "sin_dato",
       "region": "magallanes",
-      "ingest": "pending",
-      "mvp": false,
-      "feeds": [],
+      "ingest": "rss",
+      "mvp": true,
+      "feeds": [
+        "https://www.laprensaaustral.cl/feed/"
+      ],
       "lean": "center",
-      "lean_source": "draft-editorial-2026-09"
+      "lean_source": "draft-editorial-2026-09",
+      "notes": "RSS WordPress activo."
     },
     {
       "id": "diario_concepcion",
@@ -586,11 +666,18 @@
       "ownership": "copesa",
       "gov_relation": "sin_dato",
       "region": "biobio",
-      "ingest": "pending",
-      "mvp": false,
+      "ingest": "sitemap",
+      "mvp": true,
       "feeds": [],
       "lean": "lean_right",
-      "lean_source": "draft-editorial-2026-09"
+      "lean_source": "draft-editorial-2026-09",
+      "sitemaps": [
+        "https://www.diarioconcepcion.cl/sitemap.xml"
+      ],
+      "listings": [
+        "https://www.diarioconcepcion.cl/"
+      ],
+      "notes": "Sin RSS. Sitemap + portada."
     }
   ]
 }
