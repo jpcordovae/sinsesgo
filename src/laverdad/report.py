@@ -12,6 +12,8 @@ from urllib.parse import quote
 from laverdad.catalog import BUCKET_LABELS, LEAN_LABELS, ROOT, load_catalog
 from laverdad.cluster import enrich_stories
 from laverdad.history import persist_and_digest
+from laverdad.stats import load_series, persist_payload
+from laverdad.stats_panel import stats_panel_html, stats_rail_css
 
 SOCIAL_KIND_LABELS = {
     "coordinated": "Ráfaga",
@@ -160,10 +162,17 @@ def _payload(
 def _write(payload: dict[str, Any], target: Path) -> dict[str, Path]:
     target.mkdir(parents=True, exist_ok=True)
     weekly, history_path = persist_and_digest(payload, target)
+    today_stats = None
+    series: list[dict[str, Any]] = []
+    try:
+        today_stats = persist_payload(payload, source="live")
+        series = load_series(90)
+    except Exception as exc:  # noqa: BLE001 — la home no debe caer si Neon falla
+        print(f"Neon stats: {type(exc).__name__}: {exc}", flush=True)
     json_path = target / "clusters.json"
     html_path = target / "index.html"
     json_path.write_text(json.dumps(payload, ensure_ascii=False, indent=2), encoding="utf-8")
-    html_path.write_text(render_home(payload, weekly), encoding="utf-8")
+    html_path.write_text(render_home(payload, weekly, today_stats=today_stats, series=series), encoding="utf-8")
     aviso_path = target / "aviso.html"
     aviso_path.write_text(render_aviso(), encoding="utf-8")
     (target / "clusters.html").write_text(html_path.read_text(encoding="utf-8"), encoding="utf-8")
@@ -669,7 +678,13 @@ def _search_index(stories: list[dict[str, Any]]) -> str:
     )
 
 
-def render_home(payload: dict[str, Any], weekly: dict[str, Any] | None = None) -> str:
+def render_home(
+    payload: dict[str, Any],
+    weekly: dict[str, Any] | None = None,
+    *,
+    today_stats: dict[str, Any] | None = None,
+    series: list[dict[str, Any]] | None = None,
+) -> str:
     stories = payload.get("stories") or []
     crossed = [story for story in stories if story.get("source_count", 0) >= 2]
     briefing = crossed[:6]
@@ -696,6 +711,17 @@ def render_home(payload: dict[str, Any], weekly: dict[str, Any] | None = None) -
     empty_local = "<p class='empty'>No hay sucesos regionales en esta tanda.</p>"
     generated = html.escape((payload.get("generated_at") or "")[:16].replace("T", " "))
     orphans = _orphan_trends(payload)
+    if today_stats is None:
+        try:
+            today_stats = persist_payload(payload, source="render")
+        except Exception:
+            today_stats = None
+    if series is None:
+        try:
+            series = load_series(90)
+        except Exception:
+            series = []
+    rail = stats_panel_html(today_stats, series or [])
 
     return f"""<!doctype html>
 <html lang="es">
@@ -713,6 +739,8 @@ def render_home(payload: dict[str, Any], weekly: dict[str, Any] | None = None) -
 </head>
 <body>
   <div class="sky" aria-hidden="true"></div>
+  <div class="shell">
+  <div class="shell-main">
   <header class="mast">
     <p class="brand">{html.escape(SITE_NAME)}</p>
     <p class="place">Chile</p>
@@ -782,6 +810,9 @@ def render_home(payload: dict[str, Any], weekly: dict[str, Any] | None = None) -
     <a href="/aviso.html">Aviso legal</a>
     <a href="mailto:{CONTACT_EMAIL}">{CONTACT_EMAIL}</a>
   </footer>
+  </div>
+  {rail}
+  </div>
   <script>{_page_js(_search_index(stories))}</script>
 </body>
 </html>
@@ -789,7 +820,7 @@ def render_home(payload: dict[str, Any], weekly: dict[str, Any] | None = None) -
 
 
 def _page_css() -> str:
-    return """
+    return stats_rail_css() + """
     :root {
       --bg0: #e8f0f4;
       --bg1: #f7fafb;

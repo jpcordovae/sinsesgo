@@ -37,6 +37,7 @@ jobs:
       - name: Ingest RSS and render
         env:
           GA_MEASUREMENT_ID: ${{ secrets.GA_MEASUREMENT_ID }}
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
         run: python -m laverdad.cli ingest --all-rss --timeout 20
 
       - name: Deploy snapshot to Netlify

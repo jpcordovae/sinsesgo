@@ -27,6 +27,7 @@ Public site: **https://blindspot.cl** (package still `laverdad`; Netlify site id
 - Style: entities + hedonic tone (display only, not clustering)
 - Social: `fetch_trends_cl` → `attach_social` → kind/label/coordination
 - History: `history.py` compact day snapshots → Semanario digest
+- Stats: `stats.py` + Neon Postgres (`daily_stats`); rail UI in `stats_panel.py`
 - UI: single generated `index.html` from `report.py` (inline CSS/JS)
 
 ## Product surfaces
@@ -49,6 +50,7 @@ Public site: **https://blindspot.cl** (package still `laverdad`; Netlify site id
 
 - Social MVP + Redes UI; ficha / radar / semanario
 - Full-catalog ingest (no longer MVP-only subset)
+- Neon `daily_stats` + panel derecho con Chart.js; Actions secret `DATABASE_URL`
 
 ### Open / improve next
 
@@ -56,6 +58,7 @@ Public site: **https://blindspot.cl** (package still `laverdad`; Netlify site id
 2. Stop oversized titles from TV listing scrape (`ingest` / listing parsers)
 3. Let Semanario mature over multiple deploy days
 4. Optional analytics when `GA_MEASUREMENT_ID` is set in Actions
+5. Stats series will deepen as cron runs; RSS rarely retains true 90-day history
 
 ## Commands
 
@@ -64,7 +67,10 @@ $env:PYTHONPATH='E:\Projects\LaVerdad\src'
 python -u -m laverdad.cli ingest --timeout 20
 python -u -m laverdad.cli render
 python -u -m laverdad.cli serve --port 8765
+python -u -m laverdad.cli backfill-stats --months 3
 ```
+
+Requires local `.env` with `DATABASE_URL` (gitignored). Never commit Neon tokens.
 
 Gitignored outputs: `data/out/`, `public/index.html`, `public/clusters.json`, `public/history.json`, etc. Source of truth for UI is `src/laverdad/report.py`.
 

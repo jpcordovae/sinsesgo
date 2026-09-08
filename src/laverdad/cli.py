@@ -14,12 +14,13 @@ def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(description="Ingiere RSS chilenos y agrupa sucesos.")
     parser.add_argument(
         "command",
-        choices=["ingest", "render", "serve"],
-        help="ingest: baja feeds · render: regenera la home · serve: sirve data/out",
+        choices=["ingest", "render", "serve", "backfill-stats"],
+        help="ingest | render | serve | backfill-stats (Neon)",
     )
     parser.add_argument("--all-rss", action="store_true", help="Incluye outlets RSS que no son MVP")
     parser.add_argument("--timeout", type=float, default=12.0)
     parser.add_argument("--port", type=int, default=8765)
+    parser.add_argument("--months", type=int, default=3, help="Meses a intentar en backfill-stats")
     args = parser.parse_args(argv)
 
     if args.command == "render":
@@ -30,6 +31,9 @@ def main(argv: list[str] | None = None) -> int:
     if args.command == "serve":
         render_from_json()
         return _serve(args.port)
+
+    if args.command == "backfill-stats":
+        return _backfill(args.months)
 
     catalog = load_catalog()
     outlets = select_outlets(catalog, mvp_only=not args.all_rss)
@@ -54,6 +58,27 @@ def main(argv: list[str] | None = None) -> int:
         extra = f" ({row['items']})" if row["ok"] else f" {row['error']}"
         print(f"  [{mark}] {row['outlet_id']}{extra}")
     return 0 if ok else 2
+
+
+def _backfill(months: int) -> int:
+    import json
+    from pathlib import Path
+
+    from laverdad.stats import backfill_from_articles
+
+    catalog = load_catalog()
+    source = OUT_DIR / "clusters.json"
+    if not source.exists():
+        print("No hay clusters.json; corre ingest primero.", file=sys.stderr)
+        return 1
+    raw = json.loads(source.read_text(encoding="utf-8"))
+    articles = []
+    for story in raw.get("stories") or []:
+        articles.extend(story.get("articles") or [])
+    print(f"Backfill desde {len(articles)} artículos · {months} meses…", flush=True)
+    result = backfill_from_articles(articles, catalog, months=months)
+    print(f"Días escritos={result.get('days')} omitidos={result.get('skipped')} span={result.get('span')}")
+    return 0
 
 
 def _serve(port: int) -> int:
