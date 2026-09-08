@@ -56,16 +56,38 @@ El site id de Netlify (`sinsesgo`) ya está en el workflow. No commitear el toke
 
 ## Dominio
 
-- Producto: `https://sinsesgo.stellaris.cl`
+- Producto actual: `https://sinsesgo.stellaris.cl` (también `https://sinsesgo.netlify.app`)
+- Dominio propio del producto: **`blindspot.cl`** (alias del mismo sitio Netlify `sinsesgo`)
 - Apex `stellaris.cl` ya está en **Netlify DNS**.
-- En el sitio Netlify de Sin Sesgo: Domain management → Add `sinsesgo.stellaris.cl`. Netlify crea el CNAME y el certificado HTTPS.
-- Si hay que cargarlo a mano en Netlify DNS (zona `stellaris.cl`):
+- En el sitio Netlify de Sin Sesgo: Domain management → aliases `blindspot.cl` + `www.blindspot.cl`.
 
-  | Tipo | Host | Valor |
-  | --- | --- | --- |
-  | `CNAME` | `sinsesgo` | `<nombre-del-sitio>.netlify.app` |
+### DNS `blindspot.cl` (Netlify DNS / NSONE)
 
-  No hace falta `www` en un subdominio.
+En el registrador del dominio, **cambia solo los nameservers** a:
+
+| Nameserver |
+| --- |
+| `dns1.p09.nsone.net` |
+| `dns2.p09.nsone.net` |
+| `dns3.p09.nsone.net` |
+| `dns4.p09.nsone.net` |
+
+Netlify ya controla la zona y tiene estos registros (no los cargues a mano en el registrador si usas Netlify DNS):
+
+| Tipo | Host | Valor |
+| --- | --- | --- |
+| `NETLIFY` | `@` / `blindspot.cl` | `sinsesgo.netlify.app` |
+| `NETLIFY` | `www` | `sinsesgo.netlify.app` |
+
+Cuando los NS propaguen, Netlify emite el certificado HTTPS. Panel: [Domain management](https://app.netlify.com/projects/sinsesgo/domain-management).
+
+### DNS `sinsesgo.stellaris.cl` (zona `stellaris.cl`)
+
+| Tipo | Host | Valor |
+| --- | --- | --- |
+| `CNAME` | `sinsesgo` | `sinsesgo.netlify.app` |
+
+No hace falta `www` en un subdominio.
 
 ## Conectar Netlify (si el sitio aún no existe)
 
