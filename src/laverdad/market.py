@@ -7,8 +7,23 @@ from urllib.parse import urlparse
 
 from laverdad.cluster import fold
 
-# Outlets cuyo feed ya es de economía/Pulso: no filtrar.
-ALWAYS_KEEP_OUTLETS = frozenset({"df", "latercera"})
+# Outlets cuyo feed ya es de economía/Pulso/mercados: no filtrar.
+ALWAYS_KEEP_OUTLETS = frozenset(
+    {
+        "df",
+        "latercera",
+        "diario_estrategia",
+        "emol",
+        "emol_inversiones",
+        "bloomberg_linea",
+        "bnamericas",
+        "mch",
+        "revistaei",
+        "portalminero",
+        "nueva_mineria",
+        "cooperativa",
+    }
+)
 
 FINANCE_PATH = re.compile(
     r"/(economia|economía|mercados?|pulso|negocios|empresas|finanzas|inversiones|bolsa)(/|$)",
@@ -23,7 +38,10 @@ FINANCE_LEXICON = re.compile(
     r"federal\s+reserve|fed\b|sofofa|citi|jp\s*morgan|bci|santander|"
     r"banco\s+estado|codelco|sqm|enel|aes\s+andes|latam\s+airlines|"
     r"tipo\s+de\s+cambio|uf\b|utm|fisco|deuda|bonos|afp|"
-    r"mineria|miner[ií]a|exportaciones|importaciones|pacto\s+fiscal"
+    r"mineria|miner[ií]a|exportaciones|importaciones|pacto\s+fiscal|"
+    r"litio|energ[ií]a|el[eé]ctric|petrol|combustible|isapres?|"
+    r"empresas?|ceo|gerente|inversion|inversi[oó]n|startup|fintech|"
+    r"impuesto|iva\b|royalty|concesion|licitaci[oó]n|corfo|prochile"
     r")\b",
     re.I,
 )

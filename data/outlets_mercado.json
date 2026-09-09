@@ -1,9 +1,9 @@
 {
-  "version": 1,
+  "version": 2,
   "country": "CL",
   "vertical": "mercado",
-  "updated": "2026-09-08",
-  "notes": "Catálogo Blind Spot Mercado. Solo título + lead ≤400 + URL. Sin cuerpos ni bypass de paywall. Feeds de economía/Pulso/mercados donde existen; lean del draft editorial Chile.",
+  "updated": "2026-09-09",
+  "notes": "Catálogo Blind Spot Mercado ampliado. Solo título + lead ≤400 + URL. Sin cuerpos ni bypass de paywall. Lean del draft editorial Chile; niche minería/energía = center salvo nota.",
   "outlets": [
     {
       "id": "df",
@@ -16,10 +16,12 @@
       "region": "nacional",
       "ingest": "rss",
       "mvp": true,
-      "feeds": [
-        "https://www.df.cl/noticias/site/list/port/rss.xml"
+      "feeds": ["https://www.df.cl/noticias/site/list/port/rss.xml"],
+      "listings": [
+        "https://www.df.cl/mercados",
+        "https://www.df.cl/empresas"
       ],
-      "notes": "Paywall. Solo título y lead del RSS.",
+      "notes": "Paywall. RSS + portadas mercados/empresas.",
       "lean": "right",
       "lean_source": "draft-editorial-2026-09"
     },
@@ -37,9 +39,37 @@
       "feeds": [
         "https://www.latercera.com/arc/outboundfeeds/rss/category/pulso/?outputType=xml"
       ],
+      "listings": [
+        "https://www.latercera.com/canal/pulso/"
+      ],
       "notes": "Canal Pulso / economía.",
       "lean": "lean_right",
       "lean_source": "draft-editorial-2026-09"
+    },
+    {
+      "id": "diario_estrategia",
+      "name": "Diario Estrategia",
+      "domain": "diarioestrategia.cl",
+      "kind": "diario",
+      "owner": "Diario Estrategia",
+      "ownership": "independiente",
+      "gov_relation": "sin_dato",
+      "region": "nacional",
+      "ingest": "sitemap",
+      "mvp": true,
+      "feeds": [],
+      "sitemaps": [
+        "https://www.diarioestrategia.cl/sitemap/news",
+        "https://www.diarioestrategia.cl/sitemap/lastarticles"
+      ],
+      "listings": [
+        "https://www.diarioestrategia.cl/",
+        "https://www.diarioestrategia.cl/economia-finanzas.php",
+        "https://www.diarioestrategia.cl/mercados-tendencias.php"
+      ],
+      "notes": "Diario económico clásico. News sitemap + secciones.",
+      "lean": "lean_right",
+      "lean_source": "draft-editorial-2026-09-mercado"
     },
     {
       "id": "emol",
@@ -53,19 +83,85 @@
       "ingest": "sitemap",
       "mvp": true,
       "feeds": [],
-      "sitemaps": [
-        "https://www.emol.com/sitemap/sitemapIndex.xml"
-      ],
-      "listings": [
-        "https://www.emol.com/economia/"
-      ],
-      "notes": "Sitemap news + portada economía. Solo título + URL.",
+      "sitemaps": ["https://www.emol.com/sitemap/sitemapIndex.xml"],
+      "listings": ["https://www.emol.com/economia/"],
       "lean": "right",
       "lean_source": "draft-editorial-2026-09"
     },
     {
+      "id": "emol_inversiones",
+      "name": "El Mercurio Inversiones",
+      "domain": "elmercurio.com",
+      "kind": "digital",
+      "owner": "El Mercurio S.A.P. (familia Edwards)",
+      "ownership": "edwards",
+      "gov_relation": "sin_dato",
+      "region": "nacional",
+      "ingest": "sitemap",
+      "mvp": true,
+      "feeds": [],
+      "sitemaps": [],
+      "listings": ["https://www.elmercurio.com/inversiones/"],
+      "notes": "Portal inversiones Edwards. Solo titulares de portada.",
+      "lean": "right",
+      "lean_source": "draft-editorial-2026-09"
+    },
+    {
+      "id": "lasegunda",
+      "name": "La Segunda",
+      "domain": "lasegunda.com",
+      "kind": "diario",
+      "owner": "El Mercurio S.A.P. (familia Edwards)",
+      "ownership": "edwards",
+      "gov_relation": "sin_dato",
+      "region": "nacional",
+      "ingest": "sitemap",
+      "mvp": true,
+      "feeds": [],
+      "listings": ["https://www.lasegunda.com/"],
+      "lean": "right",
+      "lean_source": "draft-editorial-2026-09"
+    },
+    {
+      "id": "bloomberg_linea",
+      "name": "Bloomberg Línea Chile",
+      "domain": "bloomberglinea.com",
+      "kind": "digital",
+      "owner": "Bloomberg Línea",
+      "ownership": "otro",
+      "gov_relation": "sin_dato",
+      "region": "nacional",
+      "ingest": "sitemap",
+      "mvp": true,
+      "feeds": [],
+      "listings": [
+        "https://www.bloomberglinea.com/latinoamerica/chile/",
+        "https://www.bloomberglinea.com/tags/chile/"
+      ],
+      "notes": "Cobertura LatAm con foco Chile. Solo titulares/URL.",
+      "lean": "center",
+      "lean_source": "draft-editorial-2026-09-mercado"
+    },
+    {
+      "id": "bnamericas",
+      "name": "BNamericas Chile",
+      "domain": "bnamericas.com",
+      "kind": "digital",
+      "owner": "Business News Americas",
+      "ownership": "otro",
+      "gov_relation": "sin_dato",
+      "region": "nacional",
+      "ingest": "sitemap",
+      "mvp": true,
+      "feeds": [],
+      "listings": ["https://www.bnamericas.com/es"],
+      "notes": "Negocios LatAm. Listing raíz; /noticias/chile a veces 403.",
+      "lean": "center",
+      "lean_source": "draft-editorial-2026-09-mercado"
+    },
+    {
       "id": "elmostrador",
-      "name": "El Mostrador",
+      "name": "El Mostrador Mercados",
       "domain": "elmostrador.cl",
       "kind": "digital",
       "owner": "El Mostrador",
@@ -75,12 +171,25 @@
       "ingest": "sitemap",
       "mvp": true,
       "feeds": [],
-      "sitemaps": [
-        "https://www.elmostrador.cl/sitemap_news.xml"
-      ],
-      "listings": [
-        "https://www.elmostrador.cl/mercados/"
-      ],
+      "sitemaps": ["https://www.elmostrador.cl/sitemap_news.xml"],
+      "listings": ["https://www.elmostrador.cl/mercados/"],
+      "lean": "lean_left",
+      "lean_source": "draft-editorial-2026-09"
+    },
+    {
+      "id": "eldinamo",
+      "name": "El Dínamo Economía",
+      "domain": "eldinamo.cl",
+      "kind": "digital",
+      "owner": "El Dínamo",
+      "ownership": "independiente",
+      "gov_relation": "sin_dato",
+      "region": "nacional",
+      "ingest": "sitemap",
+      "mvp": true,
+      "feeds": [],
+      "sitemaps": ["https://www.eldinamo.cl/_files/sitemaps/sitemap_news.xml"],
+      "listings": ["https://www.eldinamo.cl/economia/"],
       "lean": "lean_left",
       "lean_source": "draft-editorial-2026-09"
     },
@@ -95,9 +204,7 @@
       "region": "nacional",
       "ingest": "rss",
       "mvp": true,
-      "feeds": [
-        "https://www.ex-ante.cl/feed/"
-      ],
+      "feeds": ["https://www.ex-ante.cl/feed/"],
       "lean": "lean_right",
       "lean_source": "draft-editorial-2026-09"
     },
@@ -113,10 +220,74 @@
       "ingest": "rss",
       "mvp": true,
       "feeds": [
-        "https://www.ciperchile.cl/feed/"
+        "https://www.ciperchile.cl/feed/",
+        "https://www.ciperchile.cl/tag/economia/feed/"
       ],
       "lean": "lean_left",
       "lean_source": "draft-editorial-2026-09-rev2"
+    },
+    {
+      "id": "theclinic",
+      "name": "The Clinic",
+      "domain": "theclinic.cl",
+      "kind": "digital",
+      "owner": "The Clinic",
+      "ownership": "independiente",
+      "gov_relation": "sin_dato",
+      "region": "nacional",
+      "ingest": "rss",
+      "mvp": true,
+      "feeds": ["https://www.theclinic.cl/feed/"],
+      "notes": "Feed general; filtro mercado por lexicon.",
+      "lean": "left",
+      "lean_source": "draft-editorial-2026-09"
+    },
+    {
+      "id": "elciudadano",
+      "name": "El Ciudadano",
+      "domain": "elciudadano.com",
+      "kind": "digital",
+      "owner": "El Ciudadano",
+      "ownership": "independiente",
+      "gov_relation": "sin_dato",
+      "region": "nacional",
+      "ingest": "rss",
+      "mvp": true,
+      "feeds": ["https://www.elciudadano.com/feed/"],
+      "lean": "left",
+      "lean_source": "draft-editorial-2026-09"
+    },
+    {
+      "id": "elsiglo",
+      "name": "El Siglo",
+      "domain": "elsiglo.cl",
+      "kind": "digital",
+      "owner": "El Siglo",
+      "ownership": "independiente",
+      "gov_relation": "sin_dato",
+      "region": "nacional",
+      "ingest": "rss",
+      "mvp": true,
+      "feeds": ["https://elsiglo.cl/feed/"],
+      "lean": "left",
+      "lean_source": "draft-editorial-2026-09"
+    },
+    {
+      "id": "infogate",
+      "name": "Infogate",
+      "domain": "infogate.cl",
+      "kind": "digital",
+      "owner": "Infogate",
+      "ownership": "independiente",
+      "gov_relation": "sin_dato",
+      "region": "nacional",
+      "ingest": "sitemap",
+      "mvp": true,
+      "feeds": [],
+      "listings": ["https://www.infogate.cl/"],
+      "notes": "Agenda económica / política. Solo portada.",
+      "lean": "lean_right",
+      "lean_source": "draft-editorial-2026-09-mercado"
     },
     {
       "id": "radio_uchile",
@@ -129,9 +300,8 @@
       "region": "nacional",
       "ingest": "rss",
       "mvp": true,
-      "feeds": [
-        "https://radio.uchile.cl/feed/"
-      ],
+      "feeds": ["https://radio.uchile.cl/feed/"],
+      "listings": ["https://radio.uchile.cl/temas/economia/"],
       "lean": "lean_left",
       "lean_source": "draft-editorial-2026-09-rev2"
     },
@@ -146,10 +316,7 @@
       "region": "nacional",
       "ingest": "rss",
       "mvp": true,
-      "feeds": [
-        "https://feeds.feedburner.com/radiobiobio/NNeJ"
-      ],
-      "notes": "Feed general; el vertical filtra por lexicon/URL de mercado.",
+      "feeds": ["https://feeds.feedburner.com/radiobiobio/NNeJ"],
       "lean": "center",
       "lean_source": "draft-editorial-2026-09-rev2"
     },
@@ -172,6 +339,24 @@
       "lean_source": "draft-editorial-2026-09"
     },
     {
+      "id": "adn",
+      "name": "ADN Radio",
+      "domain": "adnradio.cl",
+      "kind": "radio",
+      "owner": "Iberoamericana Radio Chile / PRISA",
+      "ownership": "otro",
+      "gov_relation": "sin_dato",
+      "region": "nacional",
+      "ingest": "rss",
+      "mvp": true,
+      "feeds": [
+        "https://www.adnradio.cl/arc/outboundfeeds/rss/?outputType=xml"
+      ],
+      "listings": ["https://www.adnradio.cl/economia"],
+      "lean": "center",
+      "lean_source": "draft-editorial-2026-09"
+    },
+    {
       "id": "pauta",
       "name": "Radio Pauta",
       "domain": "pauta.cl",
@@ -183,13 +368,256 @@
       "ingest": "sitemap",
       "mvp": true,
       "feeds": [],
-      "sitemaps": [
-        "https://www.pauta.cl/sitemap_news.xml"
-      ],
+      "sitemaps": ["https://www.pauta.cl/sitemap_news.xml"],
       "listings": [
-        "https://www.pauta.cl/"
+        "https://www.pauta.cl/",
+        "https://www.pauta.cl/negocios",
+        "https://www.pauta.cl/economia"
       ],
       "lean": "lean_right",
+      "lean_source": "draft-editorial-2026-09"
+    },
+    {
+      "id": "agricultura",
+      "name": "Radio Agricultura",
+      "domain": "radioagricultura.cl",
+      "kind": "radio",
+      "owner": "Sociedad Nacional de Agricultura / Grupo Copesa (histórico)",
+      "ownership": "otro",
+      "gov_relation": "sin_dato",
+      "region": "nacional",
+      "ingest": "sitemap",
+      "mvp": true,
+      "sitemaps": [
+        "https://www.radioagricultura.cl/_files/sitemaps/sitemap_news.xml"
+      ],
+      "listings": [
+        "https://www.radioagricultura.cl/",
+        "https://www.radioagricultura.cl/economia/"
+      ],
+      "lean": "right",
+      "lean_source": "draft-editorial-2026-09"
+    },
+    {
+      "id": "t13",
+      "name": "T13 Negocios",
+      "domain": "t13.cl",
+      "kind": "tv",
+      "owner": "Canal 13 / Andrónico Luksic",
+      "ownership": "luksic",
+      "gov_relation": "sin_dato",
+      "region": "nacional",
+      "ingest": "sitemap",
+      "mvp": true,
+      "feeds": [],
+      "listings": [
+        "https://www.t13.cl/negocios",
+        "https://www.t13.cl/"
+      ],
+      "lean": "center",
+      "lean_source": "draft-editorial-2026-09"
+    },
+    {
+      "id": "cnnchile",
+      "name": "CNN Chile Economía",
+      "domain": "cnnchile.com",
+      "kind": "tv",
+      "owner": "Carey Media Holdings (licencia WBD)",
+      "ownership": "carey",
+      "gov_relation": "sin_dato",
+      "region": "nacional",
+      "ingest": "sitemap",
+      "mvp": true,
+      "feeds": [],
+      "sitemaps": ["https://www.cnnchile.com/_files/sitemaps/sitemap_news.xml"],
+      "listings": ["https://www.cnnchile.com/economia/"],
+      "lean": "center",
+      "lean_source": "draft-editorial-2026-09"
+    },
+    {
+      "id": "tvn24h",
+      "name": "24 Horas Economía",
+      "domain": "24horas.cl",
+      "kind": "tv",
+      "owner": "TVN (Estado de Chile)",
+      "ownership": "estado",
+      "gov_relation": "sin_dato",
+      "region": "nacional",
+      "ingest": "sitemap",
+      "mvp": true,
+      "feeds": [],
+      "listings": [
+        "https://www.24horas.cl/economia",
+        "https://www.24horas.cl/"
+      ],
+      "lean": "center",
+      "lean_source": "draft-editorial-2026-09"
+    },
+    {
+      "id": "chvnoticias",
+      "name": "CHV Noticias Economía",
+      "domain": "chvnoticias.cl",
+      "kind": "tv",
+      "owner": "Warner Bros. Discovery / Chilevisión",
+      "ownership": "otro",
+      "gov_relation": "sin_dato",
+      "region": "nacional",
+      "ingest": "sitemap",
+      "mvp": true,
+      "feeds": [],
+      "listings": ["https://www.chvnoticias.cl/economia/"],
+      "lean": "center",
+      "lean_source": "draft-editorial-2026-09"
+    },
+    {
+      "id": "mch",
+      "name": "Minería Chilena",
+      "domain": "mch.cl",
+      "kind": "digital",
+      "owner": "Editec / Minería Chilena",
+      "ownership": "independiente",
+      "gov_relation": "sin_dato",
+      "region": "nacional",
+      "ingest": "rss",
+      "mvp": true,
+      "feeds": ["https://www.mch.cl/feed/"],
+      "listings": ["https://www.mch.cl/"],
+      "notes": "Prensa sectorial minería.",
+      "lean": "center",
+      "lean_source": "draft-editorial-2026-09-mercado"
+    },
+    {
+      "id": "revistaei",
+      "name": "Revista Electricidad / EI",
+      "domain": "revistaei.cl",
+      "kind": "digital",
+      "owner": "Editec",
+      "ownership": "independiente",
+      "gov_relation": "sin_dato",
+      "region": "nacional",
+      "ingest": "rss",
+      "mvp": true,
+      "feeds": ["https://www.revistaei.cl/feed/"],
+      "listings": ["https://www.revistaei.cl/"],
+      "notes": "Energía e infraestructura.",
+      "lean": "center",
+      "lean_source": "draft-editorial-2026-09-mercado"
+    },
+    {
+      "id": "portalminero",
+      "name": "Portal Minero",
+      "domain": "portalminero.com",
+      "kind": "digital",
+      "owner": "Portal Minero",
+      "ownership": "independiente",
+      "gov_relation": "sin_dato",
+      "region": "nacional",
+      "ingest": "sitemap",
+      "mvp": true,
+      "feeds": [],
+      "listings": ["https://www.portalminero.com/"],
+      "lean": "center",
+      "lean_source": "draft-editorial-2026-09-mercado"
+    },
+    {
+      "id": "nueva_mineria",
+      "name": "Nueva Minería y Energía",
+      "domain": "nuevamineria.com",
+      "kind": "digital",
+      "owner": "Nueva Minería",
+      "ownership": "independiente",
+      "gov_relation": "sin_dato",
+      "region": "nacional",
+      "ingest": "sitemap",
+      "mvp": true,
+      "feeds": [],
+      "listings": ["https://www.nuevamineria.com/"],
+      "lean": "center",
+      "lean_source": "draft-editorial-2026-09-mercado"
+    },
+    {
+      "id": "lacuarta",
+      "name": "La Cuarta",
+      "domain": "lacuarta.com",
+      "kind": "diario",
+      "owner": "Copesa (grupo Saieh)",
+      "ownership": "copesa",
+      "gov_relation": "sin_dato",
+      "region": "nacional",
+      "ingest": "rss",
+      "mvp": true,
+      "feeds": [
+        "https://www.lacuarta.com/arc/outboundfeeds/rss/?outputType=xml"
+      ],
+      "notes": "Feed general; filtro mercado.",
+      "lean": "center",
+      "lean_source": "draft-editorial-2026-09"
+    },
+    {
+      "id": "fastcheck",
+      "name": "Fast Check CL",
+      "domain": "fastcheck.cl",
+      "kind": "factcheck",
+      "owner": "Tlön Comunicaciones SpA",
+      "ownership": "independiente",
+      "gov_relation": "sin_dato",
+      "region": "nacional",
+      "ingest": "rss",
+      "mvp": true,
+      "feeds": ["https://www.fastcheck.cl/feed/"],
+      "notes": "Chequeos; filtro mercado cuando aplica.",
+      "lean": "center",
+      "lean_source": "draft-editorial-2026-09"
+    },
+    {
+      "id": "diario_concepcion",
+      "name": "Diario Concepción",
+      "domain": "diarioconcepcion.cl",
+      "kind": "diario",
+      "owner": "Diario Concepción",
+      "ownership": "independiente",
+      "gov_relation": "sin_dato",
+      "region": "biobio",
+      "ingest": "sitemap",
+      "mvp": true,
+      "feeds": [],
+      "listings": ["https://www.diarioconcepcion.cl/"],
+      "notes": "Regional; filtro mercado.",
+      "lean": "lean_right",
+      "lean_source": "draft-editorial-2026-09"
+    },
+    {
+      "id": "duna",
+      "name": "Radio Duna",
+      "domain": "duna.cl",
+      "kind": "radio",
+      "owner": "Copesa (grupo Saieh)",
+      "ownership": "copesa",
+      "gov_relation": "sin_dato",
+      "region": "nacional",
+      "ingest": "sitemap",
+      "mvp": true,
+      "feeds": [],
+      "sitemaps": ["https://duna.cl/sitemaps/articles.xml"],
+      "listings": ["https://www.duna.cl/"],
+      "notes": "Negocios/economía vía filtro lexicon.",
+      "lean": "right",
+      "lean_source": "draft-editorial-2026-09"
+    },
+    {
+      "id": "elsur",
+      "name": "El Sur",
+      "domain": "elsur.cl",
+      "kind": "diario",
+      "owner": "El Mercurio S.A.P. (familia Edwards)",
+      "ownership": "edwards",
+      "gov_relation": "sin_dato",
+      "region": "biobio",
+      "ingest": "sitemap",
+      "mvp": true,
+      "feeds": [],
+      "listings": ["https://www.elsur.cl/"],
+      "lean": "right",
       "lean_source": "draft-editorial-2026-09"
     }
   ]
