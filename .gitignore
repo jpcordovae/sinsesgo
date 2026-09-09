@@ -14,6 +14,7 @@ public/clusters.json
 public/aviso.html
 public/history.json
 public/robots.txt
+public/mercado/
 .cursor/
 !.cursor/rules/
 !.cursor/rules/**

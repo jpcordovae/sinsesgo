@@ -180,6 +180,7 @@ def compute_day_stats(payload: dict[str, Any], *, source: str = "live") -> dict[
     day = chile_day(payload.get("generated_at"))
     return {
         "day": day.isoformat(),
+        "vertical": payload.get("vertical") or "news",
         "generated_at": payload.get("generated_at") or datetime.now(timezone.utc).isoformat(),
         "source": source,
         "article_count": len(articles) or int(payload.get("article_count") or 0),
@@ -232,7 +233,7 @@ def persist_payload(payload: dict[str, Any], *, source: str = "live") -> dict[st
     return stats
 
 
-def load_series(days: int = 90) -> list[dict[str, Any]]:
+def load_series(days: int = 90, *, vertical: str = "news") -> list[dict[str, Any]]:
     if not database_url():
         return []
     migrate()
@@ -245,10 +246,11 @@ def load_series(days: int = 90) -> list[dict[str, Any]]:
                    late_arrivals, trends_lag, social_kinds, entities_top, entity_pairs,
                    coverage_mix, payload
             FROM daily_stats
-            WHERE day >= CURRENT_DATE - %(days)s::int
+            WHERE vertical = %(vertical)s
+              AND day >= CURRENT_DATE - %(days)s::int
             ORDER BY day ASC
             """,
-            {"days": days},
+            {"days": days, "vertical": vertical},
         ).fetchall()
     cols = [
         "day",
@@ -287,6 +289,7 @@ def load_series(days: int = 90) -> list[dict[str, Any]]:
 def _stats_row_params(stats: dict[str, Any]) -> dict[str, Any]:
     return {
         **stats,
+        "vertical": stats.get("vertical") or "news",
         "lean_share": json.dumps(stats["lean_share"], ensure_ascii=False),
         "ownership_share": json.dumps(stats["ownership_share"], ensure_ascii=False),
         "kind_share": json.dumps(stats["kind_share"], ensure_ascii=False),
@@ -304,13 +307,13 @@ def _stats_row_params(stats: dict[str, Any]) -> dict[str, Any]:
 
 UPSERT_SQL = """
 INSERT INTO daily_stats AS d (
-  day, generated_at, source, article_count, story_count, multi_source_count,
+  day, vertical, generated_at, source, article_count, story_count, multi_source_count,
   blindspot_count, local_count, homogeneous_count, orphan_trend_count,
   lean_share, ownership_share, kind_share, tone_by_lean, copy_by_outlet,
   late_arrivals, trends_lag, social_kinds, entities_top, entity_pairs,
   coverage_mix, payload
 ) VALUES (
-  %(day)s::date, %(generated_at)s::timestamptz, %(source)s, %(article_count)s,
+  %(day)s::date, %(vertical)s, %(generated_at)s::timestamptz, %(source)s, %(article_count)s,
   %(story_count)s, %(multi_source_count)s, %(blindspot_count)s, %(local_count)s,
   %(homogeneous_count)s, %(orphan_trend_count)s,
   %(lean_share)s::jsonb, %(ownership_share)s::jsonb, %(kind_share)s::jsonb,
@@ -318,7 +321,7 @@ INSERT INTO daily_stats AS d (
   %(trends_lag)s::jsonb, %(social_kinds)s::jsonb, %(entities_top)s::jsonb,
   %(entity_pairs)s::jsonb, %(coverage_mix)s::jsonb, %(payload)s::jsonb
 )
-ON CONFLICT (day) DO UPDATE SET
+ON CONFLICT (day, vertical) DO UPDATE SET
   generated_at = EXCLUDED.generated_at,
   source = EXCLUDED.source,
   article_count = EXCLUDED.article_count,
@@ -348,6 +351,7 @@ def backfill_from_articles(
     catalog: dict[str, Any],
     *,
     months: int = 3,
+    vertical: str = "news",
 ) -> dict[str, int]:
     """Reconstruye días desde published_at. RSS/sitemaps casi nunca cubren 90 días reales."""
     from laverdad.catalog import outlet_by_id
@@ -442,6 +446,7 @@ def backfill_from_articles(
             .astimezone(timezone.utc)
             .isoformat(),
             "article_count": len(day_arts),
+            "vertical": vertical,
             "stories": crossed_stories + singles,
             "trends": [],
         }

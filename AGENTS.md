@@ -37,6 +37,7 @@ Public site: **https://blindspot.cl** (package still `laverdad`; Netlify site id
 3. **Redes** — Trends list + signaled stories
 4. **Semanario** — multi-day archive when `public/history.json` accumulates
 5. **Ciego / Local / Metodología / Aviso**
+6. **Mercado** — `mercado.blindspot.cl` (alias Netlify → `public/mercado/`); catalog `data/outlets_mercado.json`; `ingest --vertical mercado`
 
 ## State as of 2026-09-08
 
@@ -65,12 +66,15 @@ Public site: **https://blindspot.cl** (package still `laverdad`; Netlify site id
 ```powershell
 $env:PYTHONPATH='E:\Projects\LaVerdad\src'
 python -u -m laverdad.cli ingest --timeout 20
+python -u -m laverdad.cli ingest --vertical mercado --timeout 20
 python -u -m laverdad.cli render
 python -u -m laverdad.cli serve --port 8765
 python -u -m laverdad.cli backfill-stats --months 3
 ```
 
 Requires local `.env` with `DATABASE_URL` (gitignored). Never commit Neon tokens.
+
+DNS: alias Netlify `mercado.blindspot.cl` + CNAME; `_redirects` maps host → `/mercado/`.
 
 Gitignored outputs: `data/out/`, `public/index.html`, `public/clusters.json`, `public/history.json`, etc. Source of truth for UI is `src/laverdad/report.py`.
 

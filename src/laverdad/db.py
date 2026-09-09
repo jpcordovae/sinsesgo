@@ -62,7 +62,8 @@ def connect() -> Iterator[Any]:
 
 SCHEMA_SQL = """
 CREATE TABLE IF NOT EXISTS daily_stats (
-  day DATE PRIMARY KEY,
+  day DATE NOT NULL,
+  vertical TEXT NOT NULL DEFAULT 'news',
   generated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
   source TEXT NOT NULL DEFAULT 'live',
   article_count INT NOT NULL DEFAULT 0,
@@ -76,17 +77,36 @@ CREATE TABLE IF NOT EXISTS daily_stats (
   ownership_share JSONB NOT NULL DEFAULT '{}'::jsonb,
   kind_share JSONB NOT NULL DEFAULT '{}'::jsonb,
   tone_by_lean JSONB NOT NULL DEFAULT '{}'::jsonb,
-  copy_by_outlet JSONB NOT NULL DEFAULT '{}'::jsonb,
+  copy_by_outlet JSONB NOT NULL DEFAULT '[]'::jsonb,
   late_arrivals JSONB NOT NULL DEFAULT '[]'::jsonb,
   trends_lag JSONB NOT NULL DEFAULT '{}'::jsonb,
   social_kinds JSONB NOT NULL DEFAULT '{}'::jsonb,
   entities_top JSONB NOT NULL DEFAULT '[]'::jsonb,
   entity_pairs JSONB NOT NULL DEFAULT '[]'::jsonb,
   coverage_mix JSONB NOT NULL DEFAULT '{}'::jsonb,
-  payload JSONB NOT NULL DEFAULT '{}'::jsonb
+  payload JSONB NOT NULL DEFAULT '{}'::jsonb,
+  PRIMARY KEY (day, vertical)
 );
 
 CREATE INDEX IF NOT EXISTS daily_stats_generated_idx ON daily_stats (generated_at DESC);
+CREATE INDEX IF NOT EXISTS daily_stats_vertical_day_idx ON daily_stats (vertical, day DESC);
+"""
+
+MIGRATE_VERTICAL_SQL = """
+ALTER TABLE daily_stats ADD COLUMN IF NOT EXISTS vertical TEXT NOT NULL DEFAULT 'news';
+DO $$
+BEGIN
+  IF EXISTS (
+    SELECT 1 FROM information_schema.table_constraints
+    WHERE table_name = 'daily_stats' AND constraint_type = 'PRIMARY KEY'
+  ) THEN
+    ALTER TABLE daily_stats DROP CONSTRAINT daily_stats_pkey;
+  END IF;
+  ALTER TABLE daily_stats ADD PRIMARY KEY (day, vertical);
+EXCEPTION
+  WHEN duplicate_object THEN NULL;
+  WHEN invalid_table_definition THEN NULL;
+END $$;
 """
 
 
@@ -98,6 +118,16 @@ def migrate() -> None:
     if _migrated:
         return
     with connect() as conn:
+        exists = conn.execute(
+            """
+            SELECT EXISTS (
+              SELECT 1 FROM information_schema.tables
+              WHERE table_schema = 'public' AND table_name = 'daily_stats'
+            )
+            """
+        ).fetchone()[0]
+        if exists:
+            conn.execute(MIGRATE_VERTICAL_SQL)
         conn.execute(SCHEMA_SQL)
         conn.commit()
     _migrated = True

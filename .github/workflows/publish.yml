@@ -2,8 +2,8 @@ name: Ingest and publish
 
 on:
   schedule:
-    # 5×/día, medianoche Chile (UTC−3): 00:00, 05:00, 10:00, 15:00, 20:00 CL
-    - cron: "0 3,8,13,18,23 * * *"
+    # Cada 2 horas (UTC). Chile ≈ UTC−3.
+    - cron: "0 */2 * * *"
   workflow_dispatch:
   push:
     branches: [main, master]
@@ -38,7 +38,9 @@ jobs:
         env:
           GA_MEASUREMENT_ID: ${{ secrets.GA_MEASUREMENT_ID }}
           DATABASE_URL: ${{ secrets.DATABASE_URL }}
-        run: python -m laverdad.cli ingest --all-rss --timeout 20
+        run: |
+          python -m laverdad.cli ingest --all-rss --timeout 20
+          python -m laverdad.cli ingest --vertical mercado --timeout 20
 
       - name: Deploy snapshot to Netlify
         env:

@@ -1,0 +1,196 @@
+{
+  "version": 1,
+  "country": "CL",
+  "vertical": "mercado",
+  "updated": "2026-09-08",
+  "notes": "Catálogo Blind Spot Mercado. Solo título + lead ≤400 + URL. Sin cuerpos ni bypass de paywall. Feeds de economía/Pulso/mercados donde existen; lean del draft editorial Chile.",
+  "outlets": [
+    {
+      "id": "df",
+      "name": "Diario Financiero",
+      "domain": "df.cl",
+      "kind": "diario",
+      "owner": "Grupo Claro",
+      "ownership": "claro",
+      "gov_relation": "sin_dato",
+      "region": "nacional",
+      "ingest": "rss",
+      "mvp": true,
+      "feeds": [
+        "https://www.df.cl/noticias/site/list/port/rss.xml"
+      ],
+      "notes": "Paywall. Solo título y lead del RSS.",
+      "lean": "right",
+      "lean_source": "draft-editorial-2026-09"
+    },
+    {
+      "id": "latercera",
+      "name": "La Tercera Pulso",
+      "domain": "latercera.com",
+      "kind": "diario",
+      "owner": "Copesa (grupo Saieh)",
+      "ownership": "copesa",
+      "gov_relation": "sin_dato",
+      "region": "nacional",
+      "ingest": "rss",
+      "mvp": true,
+      "feeds": [
+        "https://www.latercera.com/arc/outboundfeeds/rss/category/pulso/?outputType=xml"
+      ],
+      "notes": "Canal Pulso / economía.",
+      "lean": "lean_right",
+      "lean_source": "draft-editorial-2026-09"
+    },
+    {
+      "id": "emol",
+      "name": "Emol Economía",
+      "domain": "emol.com",
+      "kind": "digital",
+      "owner": "El Mercurio S.A.P. (familia Edwards)",
+      "ownership": "edwards",
+      "gov_relation": "sin_dato",
+      "region": "nacional",
+      "ingest": "sitemap",
+      "mvp": true,
+      "feeds": [],
+      "sitemaps": [
+        "https://www.emol.com/sitemap/sitemapIndex.xml"
+      ],
+      "listings": [
+        "https://www.emol.com/economia/"
+      ],
+      "notes": "Sitemap news + portada economía. Solo título + URL.",
+      "lean": "right",
+      "lean_source": "draft-editorial-2026-09"
+    },
+    {
+      "id": "elmostrador",
+      "name": "El Mostrador",
+      "domain": "elmostrador.cl",
+      "kind": "digital",
+      "owner": "El Mostrador",
+      "ownership": "independiente",
+      "gov_relation": "sin_dato",
+      "region": "nacional",
+      "ingest": "sitemap",
+      "mvp": true,
+      "feeds": [],
+      "sitemaps": [
+        "https://www.elmostrador.cl/sitemap_news.xml"
+      ],
+      "listings": [
+        "https://www.elmostrador.cl/mercados/"
+      ],
+      "lean": "lean_left",
+      "lean_source": "draft-editorial-2026-09"
+    },
+    {
+      "id": "exante",
+      "name": "Ex-Ante",
+      "domain": "ex-ante.cl",
+      "kind": "digital",
+      "owner": "Ex-Ante SpA",
+      "ownership": "independiente",
+      "gov_relation": "sin_dato",
+      "region": "nacional",
+      "ingest": "rss",
+      "mvp": true,
+      "feeds": [
+        "https://www.ex-ante.cl/feed/"
+      ],
+      "lean": "lean_right",
+      "lean_source": "draft-editorial-2026-09"
+    },
+    {
+      "id": "ciper",
+      "name": "CIPER",
+      "domain": "ciperchile.cl",
+      "kind": "investigacion",
+      "owner": "Fundación CIPER",
+      "ownership": "independiente",
+      "gov_relation": "sin_dato",
+      "region": "nacional",
+      "ingest": "rss",
+      "mvp": true,
+      "feeds": [
+        "https://www.ciperchile.cl/feed/"
+      ],
+      "lean": "lean_left",
+      "lean_source": "draft-editorial-2026-09-rev2"
+    },
+    {
+      "id": "radio_uchile",
+      "name": "Radio Universidad de Chile",
+      "domain": "radio.uchile.cl",
+      "kind": "radio",
+      "owner": "Universidad de Chile",
+      "ownership": "estado",
+      "gov_relation": "sin_dato",
+      "region": "nacional",
+      "ingest": "rss",
+      "mvp": true,
+      "feeds": [
+        "https://radio.uchile.cl/feed/"
+      ],
+      "lean": "lean_left",
+      "lean_source": "draft-editorial-2026-09-rev2"
+    },
+    {
+      "id": "biobio",
+      "name": "BioBioChile",
+      "domain": "biobiochile.cl",
+      "kind": "radio",
+      "owner": "Bío-Bío Comunicaciones",
+      "ownership": "independiente",
+      "gov_relation": "sin_dato",
+      "region": "nacional",
+      "ingest": "rss",
+      "mvp": true,
+      "feeds": [
+        "https://feeds.feedburner.com/radiobiobio/NNeJ"
+      ],
+      "notes": "Feed general; el vertical filtra por lexicon/URL de mercado.",
+      "lean": "center",
+      "lean_source": "draft-editorial-2026-09-rev2"
+    },
+    {
+      "id": "cooperativa",
+      "name": "Radio Cooperativa",
+      "domain": "cooperativa.cl",
+      "kind": "radio",
+      "owner": "Compañía Chilena de Comunicaciones",
+      "ownership": "independiente",
+      "gov_relation": "sin_dato",
+      "region": "nacional",
+      "ingest": "rss",
+      "mvp": true,
+      "feeds": [
+        "https://www.cooperativa.cl/noticias/site/tax/port/all/rss_4___1.xml"
+      ],
+      "notes": "Canal economía (tax rss_4).",
+      "lean": "center",
+      "lean_source": "draft-editorial-2026-09"
+    },
+    {
+      "id": "pauta",
+      "name": "Radio Pauta",
+      "domain": "pauta.cl",
+      "kind": "radio",
+      "owner": "Cámara Chilena de la Construcción / Pauta Comunicaciones",
+      "ownership": "otro",
+      "gov_relation": "sin_dato",
+      "region": "nacional",
+      "ingest": "sitemap",
+      "mvp": true,
+      "feeds": [],
+      "sitemaps": [
+        "https://www.pauta.cl/sitemap_news.xml"
+      ],
+      "listings": [
+        "https://www.pauta.cl/"
+      ],
+      "lean": "lean_right",
+      "lean_source": "draft-editorial-2026-09"
+    }
+  ]
+}

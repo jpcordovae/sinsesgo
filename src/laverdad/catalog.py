@@ -6,6 +6,12 @@ from typing import Any
 
 ROOT = Path(__file__).resolve().parents[2]
 CATALOG_PATH = ROOT / "data" / "outlets.json"
+CATALOG_MERCADO_PATH = ROOT / "data" / "outlets_mercado.json"
+
+VERTICALS = {
+    "news": CATALOG_PATH,
+    "mercado": CATALOG_MERCADO_PATH,
+}
 
 # 5 etiquetas editoriales → 3 cubetas del Bias Bar (misma fórmula que Ground News).
 LEAN_BUCKETS = {
@@ -31,10 +37,12 @@ BUCKET_LABELS = {
 }
 
 
-def load_catalog(path: Path | None = None) -> dict[str, Any]:
-    data = json.loads((path or CATALOG_PATH).read_text(encoding="utf-8"))
+def load_catalog(path: Path | None = None, *, vertical: str = "news") -> dict[str, Any]:
+    catalog_path = path or VERTICALS.get(vertical) or CATALOG_PATH
+    data = json.loads(catalog_path.read_text(encoding="utf-8"))
     if "outlets" not in data:
         raise ValueError("El catálogo no tiene outlets")
+    data.setdefault("vertical", vertical)
     return data
 
 

@@ -36,6 +36,31 @@ CONTACT_EMAIL = "jpcordovae@gmail.com"
 TAGLINE = "El mismo suceso. Distintos medios. Cómo lo cuentan."
 SUBLINE = "Cobertura chilena, sesgo y redes — sin el artículo completo."
 
+SITES: dict[str, dict[str, str]] = {
+    "news": {
+        "vertical": "news",
+        "name": SITE_NAME,
+        "url": SITE_URL,
+        "tagline": TAGLINE,
+        "subline": SUBLINE,
+        "place": "Chile",
+        "sister_label": "Mercado",
+        "sister_url": "https://mercado.blindspot.cl/",
+        "public_subdir": "",
+    },
+    "mercado": {
+        "vertical": "mercado",
+        "name": "Blind Spot Mercado",
+        "url": "https://mercado.blindspot.cl",
+        "tagline": "El mismo movimiento. Distintos medios. Cómo lo cuentan.",
+        "subline": "Economía y mercados en Chile — cobertura comparada, sin el artículo completo.",
+        "place": "Mercados · Chile",
+        "sister_label": "Agenda general",
+        "sister_url": "https://blindspot.cl/",
+        "public_subdir": "mercado",
+    },
+}
+
 OWNER_LABELS = {
     "edwards": "Edwards",
     "copesa": "Copesa",
@@ -95,6 +120,7 @@ def write_outputs(
     ingest: dict[str, Any],
     stories: list[dict[str, Any]],
     out_dir: Path | None = None,
+    vertical: str = "news",
 ) -> dict[str, Path]:
     from laverdad.social import attach_social, fetch_trends_cl
 
@@ -107,23 +133,32 @@ def write_outputs(
         ingest.get("articles") or [],
         stories,
         trends=trends,
+        vertical=vertical,
     )
-    return _write(payload, out_dir or OUT_DIR)
+    return _write(payload, out_dir or OUT_DIR, vertical=vertical)
 
 
-def render_from_json(json_path: Path | None = None, out_dir: Path | None = None) -> dict[str, Path]:
+def render_from_json(
+    json_path: Path | None = None,
+    out_dir: Path | None = None,
+    *,
+    vertical: str = "news",
+) -> dict[str, Path]:
     source = json_path or (OUT_DIR / "clusters.json")
     raw = json.loads(source.read_text(encoding="utf-8"))
-    catalog = load_catalog()
+    vertical = str(raw.get("vertical") or vertical)
+    catalog = load_catalog(vertical=vertical)
     from laverdad.social import attach_social, fetch_trends_cl
 
     stories = enrich_stories(raw.get("stories") or [], catalog)
     trends = fetch_trends_cl()
     stories = attach_social(stories, trends)
-    payload = _payload(catalog, raw.get("feed_status") or [], [], stories, trends=trends)
+    payload = _payload(
+        catalog, raw.get("feed_status") or [], [], stories, trends=trends, vertical=vertical
+    )
     payload["generated_at"] = raw.get("generated_at") or payload["generated_at"]
     payload["article_count"] = raw.get("article_count") or payload["article_count"]
-    return _write(payload, out_dir or OUT_DIR)
+    return _write(payload, out_dir or OUT_DIR, vertical=vertical)
 
 
 def _payload(
@@ -132,10 +167,13 @@ def _payload(
     articles: list[dict[str, Any]],
     stories: list[dict[str, Any]],
     trends: list[dict[str, Any]] | None = None,
+    *,
+    vertical: str = "news",
 ) -> dict[str, Any]:
     return {
         "generated_at": datetime.now(timezone.utc).isoformat(),
         "country": catalog.get("country"),
+        "vertical": vertical,
         "feed_status": feed_status,
         "article_count": len(articles) or sum(s.get("article_count") or 0 for s in stories),
         "story_count": len(stories),
@@ -159,24 +197,28 @@ def _payload(
     }
 
 
-def _write(payload: dict[str, Any], target: Path) -> dict[str, Path]:
+def _write(payload: dict[str, Any], target: Path, *, vertical: str = "news") -> dict[str, Path]:
+    site = SITES.get(vertical) or SITES["news"]
     target.mkdir(parents=True, exist_ok=True)
     weekly, history_path = persist_and_digest(payload, target)
     today_stats = None
     series: list[dict[str, Any]] = []
     try:
         today_stats = persist_payload(payload, source="live")
-        series = load_series(90)
+        series = load_series(90, vertical=vertical)
     except Exception as exc:  # noqa: BLE001 — la home no debe caer si Neon falla
         print(f"Neon stats: {type(exc).__name__}: {exc}", flush=True)
     json_path = target / "clusters.json"
     html_path = target / "index.html"
     json_path.write_text(json.dumps(payload, ensure_ascii=False, indent=2), encoding="utf-8")
-    html_path.write_text(render_home(payload, weekly, today_stats=today_stats, series=series), encoding="utf-8")
+    html_path.write_text(
+        render_home(payload, weekly, today_stats=today_stats, series=series, site=site),
+        encoding="utf-8",
+    )
     aviso_path = target / "aviso.html"
-    aviso_path.write_text(render_aviso(), encoding="utf-8")
+    aviso_path.write_text(render_aviso(site=site), encoding="utf-8")
     (target / "clusters.html").write_text(html_path.read_text(encoding="utf-8"), encoding="utf-8")
-    _sync_public(json_path, html_path, aviso_path, history_path)
+    _sync_public(json_path, html_path, aviso_path, history_path, vertical=vertical)
     return {"json": json_path, "html": html_path, "aviso": aviso_path, "history": history_path}
 
 
@@ -185,18 +227,40 @@ def _sync_public(
     html_path: Path,
     aviso_path: Path | None = None,
     history_path: Path | None = None,
+    *,
+    vertical: str = "news",
 ) -> None:
-    PUBLIC_DIR.mkdir(parents=True, exist_ok=True)
-    shutil.copyfile(html_path, PUBLIC_DIR / "index.html")
-    shutil.copyfile(json_path, PUBLIC_DIR / "clusters.json")
+    site = SITES.get(vertical) or SITES["news"]
+    sub = (site.get("public_subdir") or "").strip("/")
+    dest = PUBLIC_DIR / sub if sub else PUBLIC_DIR
+    dest.mkdir(parents=True, exist_ok=True)
+    shutil.copyfile(html_path, dest / "index.html")
+    shutil.copyfile(json_path, dest / "clusters.json")
     if aviso_path and aviso_path.exists():
-        shutil.copyfile(aviso_path, PUBLIC_DIR / "aviso.html")
+        shutil.copyfile(aviso_path, dest / "aviso.html")
     if history_path and history_path.exists():
-        shutil.copyfile(history_path, PUBLIC_DIR / "history.json")
-    (PUBLIC_DIR / "robots.txt").write_text(
-        "User-agent: *\nAllow: /\nSitemap: https://blindspot.cl/\n",
-        encoding="utf-8",
+        shutil.copyfile(history_path, dest / "history.json")
+    # Host rewrite for Mercado subdomain (preserve other redirect rules).
+    redirects = PUBLIC_DIR / "_redirects"
+    base = redirects.read_text(encoding="utf-8") if redirects.exists() else ""
+    lines = [ln for ln in base.splitlines() if ln.strip() and "mercado.blindspot.cl" not in ln]
+    if not any(ln.strip().startswith("/clusters.html") for ln in lines):
+        lines.insert(0, "/clusters.html  /  301")
+    if not any(ln.strip().startswith("/index.html") for ln in lines):
+        lines.insert(1 if lines else 0, "/index.html     /  301")
+    lines.extend(
+        [
+            "https://mercado.blindspot.cl/*  /mercado/:splat  200!",
+            "https://mercado.blindspot.cl/   /mercado/index.html  200!",
+        ]
     )
+    redirects.write_text("\n".join(lines) + "\n", encoding="utf-8")
+    if vertical == "news":
+        (PUBLIC_DIR / "robots.txt").write_text(
+            "User-agent: *\nAllow: /\nSitemap: https://blindspot.cl/\n"
+            "Sitemap: https://mercado.blindspot.cl/\n",
+            encoding="utf-8",
+        )
 
 
 def _analytics_snippet() -> str:
@@ -616,11 +680,13 @@ def _methodology(outlets: list[dict[str, Any]]) -> str:
     """
 
 
-def _aviso_body() -> str:
+def _aviso_body(site: dict[str, str] | None = None) -> str:
+    site = site or SITES["news"]
     mail = html.escape(CONTACT_EMAIL)
+    name = html.escape(site.get("name") or SITE_NAME)
     return f"""
       <h2>Aviso legal</h2>
-      <p><strong>{html.escape(SITE_NAME)}</strong> es un agregador de cobertura noticiosa sobre Chile. No es un medio que publique reportajes propios ni un semáforo de verdad.</p>
+      <p><strong>{name}</strong> es un agregador de cobertura noticiosa sobre Chile. No es un medio que publique reportajes propios ni un semáforo de verdad.</p>
       <p>De cada nota guardamos únicamente <strong>título, bajada (máximo 400 caracteres) y URL</strong>. No almacenamos el cuerpo del artículo, no bypaseamos paywalls y no hacemos clipping de la obra completa. El enlace lleva al sitio original.</p>
       <p>La tendencia izquierda / centro / derecha es un <strong>criterio editorial chileno</strong> del catálogo, no un rating de AllSides, Ad Fontes ni Media Bias/Fact Check. Independiente describe propiedad, no neutralidad.</p>
       <h2>Contacto</h2>
@@ -628,13 +694,15 @@ def _aviso_body() -> str:
     """
 
 
-def render_aviso() -> str:
+def render_aviso(site: dict[str, str] | None = None) -> str:
+    site = site or SITES["news"]
+    name = html.escape(site.get("name") or SITE_NAME)
     return f"""<!doctype html>
 <html lang="es">
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Aviso legal · {html.escape(SITE_NAME)}</title>
+  <title>Aviso legal · {name}</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,560;9..144,700&family=Source+Sans+3:wght@400;600;700&display=swap" rel="stylesheet">
@@ -643,9 +711,9 @@ def render_aviso() -> str:
 <body>
   <div class="sky" aria-hidden="true"></div>
   <main class="sheet aviso-page">
-    <p class="brand"><a href="/">{html.escape(SITE_NAME)}</a></p>
+    <p class="brand"><a href="/">{name}</a></p>
     <p class="place">Aviso legal</p>
-    {_aviso_body()}
+    {_aviso_body(site)}
   </main>
 </body>
 </html>
@@ -684,7 +752,18 @@ def render_home(
     *,
     today_stats: dict[str, Any] | None = None,
     series: list[dict[str, Any]] | None = None,
+    site: dict[str, str] | None = None,
 ) -> str:
+    site = site or SITES.get(str(payload.get("vertical") or "news")) or SITES["news"]
+    vertical = site.get("vertical") or "news"
+    site_name = site.get("name") or SITE_NAME
+    site_url = site.get("url") or SITE_URL
+    tagline = site.get("tagline") or TAGLINE
+    subline = site.get("subline") or SUBLINE
+    place = site.get("place") or "Chile"
+    sister_label = site.get("sister_label") or ""
+    sister_url = site.get("sister_url") or ""
+
     stories = payload.get("stories") or []
     crossed = [story for story in stories if story.get("source_count", 0) >= 2]
     briefing = crossed[:6]
@@ -718,19 +797,38 @@ def render_home(
             today_stats = None
     if series is None:
         try:
-            series = load_series(90)
+            series = load_series(90, vertical=vertical)
         except Exception:
             series = []
     rail = stats_panel_html(today_stats, series or [])
+    sister_link = (
+        f'<a href="{html.escape(sister_url)}">{html.escape(sister_label)}</a>'
+        if sister_url and sister_label
+        else ""
+    )
+    local_nav = (
+        ""
+        if vertical == "mercado"
+        else '<button type="button" data-pane="local">Local</button>'
+    )
+    local_pane = (
+        ""
+        if vertical == "mercado"
+        else f"""
+    <section id="pane-local" class="pane">
+      <header class="block-head"><p class="kicker">Local</p><h2>Región o ancla geográfica</h2></header>
+      {local_html or empty_local}
+    </section>"""
+    )
 
     return f"""<!doctype html>
 <html lang="es">
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>{html.escape(SITE_NAME)} · {html.escape(TAGLINE)}</title>
-  <meta name="description" content="{html.escape(TAGLINE)} {html.escape(SUBLINE)}">
-  <link rel="canonical" href="{SITE_URL}/">
+  <title>{html.escape(site_name)} · {html.escape(tagline)}</title>
+  <meta name="description" content="{html.escape(tagline)} {html.escape(subline)}">
+  <link rel="canonical" href="{html.escape(site_url)}/">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,560;9..144,700&family=Source+Sans+3:wght@400;600;700&display=swap" rel="stylesheet">
@@ -742,10 +840,10 @@ def render_home(
   <div class="shell">
   <div class="shell-main">
   <header class="mast">
-    <p class="brand">{html.escape(SITE_NAME)}</p>
-    <p class="place">Chile</p>
-    <h1>{html.escape(TAGLINE)}</h1>
-    <p class="sub">{html.escape(SUBLINE)}</p>
+    <p class="brand">{html.escape(site_name)}</p>
+    <p class="place">{html.escape(place)}</p>
+    <h1>{html.escape(tagline)}</h1>
+    <p class="sub">{html.escape(subline)}</p>
     <div class="hero-stats">
       <div class="stat"><strong>{len(crossed)}</strong><span>cruzados</span></div>
       <div class="stat"><strong>{payload.get("blindspot_count", 0)}</strong><span>ciegos</span></div>
@@ -756,7 +854,7 @@ def render_home(
     <button type="button" data-pane="portada" aria-current="true">Portada</button>
     <button type="button" data-pane="radar">Radar</button>
     <button type="button" data-pane="ciego">Ciego</button>
-    <button type="button" data-pane="local">Local</button>
+    {local_nav}
     <button type="button" data-pane="redes">Redes</button>
     <button type="button" data-pane="semana">Semanario</button>
     <button type="button" data-pane="metodo">Metodología</button>
@@ -790,10 +888,7 @@ def render_home(
       <header class="block-head"><p class="kicker">Ciego</p><h2>Un lado casi no cubre</h2></header>
       {blind_html or empty_blind}
     </section>
-    <section id="pane-local" class="pane">
-      <header class="block-head"><p class="kicker">Local</p><h2>Región o ancla geográfica</h2></header>
-      {local_html or empty_local}
-    </section>
+    {local_pane}
     <section id="pane-redes" class="pane">
       {_redes_pane(payload)}
     </section>
@@ -808,6 +903,7 @@ def render_home(
   <footer>
     <span>{generated} UTC</span>
     <a href="/aviso.html">Aviso legal</a>
+    {sister_link}
     <a href="mailto:{CONTACT_EMAIL}">{CONTACT_EMAIL}</a>
   </footer>
   </div>
